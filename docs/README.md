@@ -6,7 +6,10 @@ Read `docs/tasks.md` first when resuming work in this repo. It records the curre
 
 Read `docs/fleet-sync.md` before planning any dotfile deployment to another machine.
 
+Read `docs/bash.md` before changing Bash startup behavior.
+
+Read `docs/agent-config.md` before changing Claude, Codex, or skill sync behavior.
+
 Read `docs/ubuntu.md` when preparing a Linux host for these dotfiles.
 
 Read `docs/node.md` when setting up Node, Bun, pnpm, or mise.
-

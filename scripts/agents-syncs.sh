@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(CDPATH='' cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+
+copy_file() {
+  local src="$1"
+  local dst="$2"
+
+  mkdir -p "$(dirname "$dst")"
+  if [[ -e "$dst" && ! -f "$dst" ]]; then
+    printf 'skip non-file destination: %s\n' "$dst" >&2
+    return 1
+  fi
+  if [[ -f "$dst" ]] && cmp -s "$src" "$dst"; then
+    printf 'unchanged %s\n' "$dst"
+    return
+  fi
+  if [[ -f "$dst" ]]; then
+    printf 'replace %s\n' "$dst"
+    diff -u "$dst" "$src" || true
+  else
+    printf 'create %s\n' "$dst"
+  fi
+  cp "$src" "$dst"
+}
+
+link_skill() {
+  local src="$1"
+  local dst="$2"
+
+  if [[ -e "$dst" && ! -L "$dst" ]]; then
+    printf 'skip existing non-symlink skill: %s\n' "$dst" >&2
+    return
+  fi
+  ln -sfn "$src" "$dst"
+  printf 'linked %s -> %s\n' "$dst" "$src"
+}
+
+prune_repo_skill_links() {
+  local skills_src="$1"
+  local skills_dst="$2"
+  local link target name
+
+  [[ -d "$skills_dst" ]] || return
+  for link in "$skills_dst"/*; do
+    [[ -L "$link" ]] || continue
+    target="$(readlink "$link")"
+    case "$target" in
+      "$skills_src"/*)
+        name="${link##*/}"
+        if [[ ! -d "$skills_src/$name" ]]; then
+          rm "$link"
+          printf 'pruned stale skill link: %s\n' "$link"
+        fi
+        ;;
+    esac
+  done
+}
+
+sync_skill_tree() {
+  local skills_src="$1"
+  local skills_dst="$2"
+  local skill
+
+  [[ -d "$skills_src" ]] || return
+  mkdir -p "$skills_dst"
+  for skill in "$skills_src"/*; do
+    [[ -d "$skill" ]] || continue
+    link_skill "$skill" "$skills_dst/${skill##*/}"
+  done
+  prune_repo_skill_links "$skills_src" "$skills_dst"
+}
+
+main() {
+  copy_file "$repo_root/dots/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+  copy_file "$repo_root/dots/.codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+
+  sync_skill_tree "$repo_root/dots/.claude/skills" "$HOME/.claude/skills"
+  sync_skill_tree "$repo_root/dots/.codex/skills" "$HOME/.codex/skills"
+}
+
+main "$@"

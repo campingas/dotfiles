@@ -4,30 +4,34 @@ This file tracks current dotfiles work so the user and agents can see what chang
 
 ## Current Focus
 
-Document the repo contract for a Ghostty and cmux main-laptop workflow, zsh plus tmux on SSH hosts, and Bash-first behavior for agent-facing shell work.
+Keep this repo as the single source for shell dotfiles plus coding-agent configuration.
+
+Keep default context small: `AGENTS.md` routes to focused docs instead of carrying full operational detail.
 
 Keep fleet updates confirmation-gated. Agents may prepare a deployment plan, but they must wait for confirmation before copying files to remote machines.
 
 ## Open Items
 
-Design a small fleet-sync helper only after the documentation workflow has settled.
+Run `scripts/agents-syncs.sh` after changing `dots/.claude/CLAUDE.md`, `dots/.codex/AGENTS.md`, `dots/.claude/skills/`, or `dots/.codex/skills/`.
 
-Keep host identity, network addresses, and access notes in the local hardware inventory repo instead of duplicating them here.
+Design a fleet-sync helper only after the local dotfile and agent-config sync workflow has settled.
 
 ## Recent Notes
 
-`README.md` is the short human entrypoint.
+The former standalone skills repo content now lives under `dots/.claude/` and `dots/.codex/`.
 
-`AGENTS.md` is the working contract for agents in this repo.
+`docs/agent-config.md` defines the local agent-config sync workflow.
 
-`docs/fleet-sync.md` defines the deploy safety boundary.
+`docs/bash.md` defines Bash fast-path behavior and validation.
+
+`repo-agents-md` now captures the workflow for concise repo-specific agent contracts.
 
 ## Validation
 
-For docs-only changes, inspect the Markdown and run a search for stale placeholders or obvious typos.
+For docs-only changes, inspect the Markdown and run a search for stale placeholders, private absolute paths, and old layout names.
 
-For Bash changes, validate `.bashrc`, `.profile`, and `.inputrc` before calling the work done.
-
-For agent Bash changes, verify the fast path with `DOTFILES_AGENT_SHELL=1` and the full path with `DOTFILES_AGENT_SHELL=0`.
+For Bash changes, run `bash -n dots/.bashrc dots/.profile` and `shellcheck dots/.bashrc dots/.profile`.
 
 For zsh or tmux changes, validate the affected startup file and make sure the SSH tmux escape hatch remains documented.
+
+For agent-config changes, run `bash -n scripts/agents-syncs.sh` and `shellcheck scripts/agents-syncs.sh`.

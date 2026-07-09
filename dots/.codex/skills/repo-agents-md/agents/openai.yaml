@@ -1,0 +1,4 @@
+interface:
+  display_name: "Repo AGENTS.md"
+  short_description: "Create or update concise repo-specific AGENTS.md files."
+  default_prompt: "Create or update this repository AGENTS.md so it is concise, specific, token-efficient, and routes to deeper docs when needed."

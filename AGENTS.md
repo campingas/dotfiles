@@ -1,55 +1,39 @@
 # AGENTS.md
 
-This repo manages personal shell and terminal configuration across local and SSH machines.
+This repo manages shell dotfiles and global coding-agent configuration.
 
-## Repository Layout
+Global agent preferences live under `dots/.claude/CLAUDE.md` and `dots/.codex/AGENTS.md`; do not duplicate them here unless this repo needs a stricter local rule.
 
-`dots/` contains the files intended to be deployed into home directories.
+## Read First
 
-`docs/` contains setup notes, fleet-sync guidance, and current task state.
+Use `README.md` for the human overview.
 
-`README.md` is the short human entrypoint. Keep it general and route details into `docs/`.
+For Bash work, read `docs/bash.md` before editing `.bashrc`, `.profile`, or `.inputrc`.
 
-## Shell Roles
+For Claude, Codex, or skill sync work, read `docs/agent-config.md`.
 
-Bash is the agent and compatibility shell. Keep `.bashrc`, `.profile`, and `.inputrc` simple, portable, quiet in non-interactive sessions, and written as pure Bash or POSIX shell where appropriate.
+For fleet deployment, read `docs/fleet-sync.md` and wait for explicit confirmation before copying files to another machine.
 
-Interactive agent Bash should stop after core environment, tool PATHs, and CDPATH setup. `DOTFILES_AGENT_SHELL=1` forces that fast path, while `DOTFILES_AGENT_SHELL=0` forces the full interactive setup.
+Use `docs/tasks.md` and `docs/current-state.md` for current work state.
 
-Zsh is the human interface shell. Keep `.zshrc` concise, efficient, and optimized for interactive SSH use with tmux.
+## Repo Rules
 
-The normal user workflow is Ghostty with cmux on the main laptop, then SSH into other computers where zsh should auto-attach to tmux when configured.
+Bash is the agent and compatibility shell.
+
+Zsh is the human interactive shell.
+
+The normal user workflow is Ghostty with cmux locally, then SSH to hosts where zsh may auto-attach to tmux.
 
 When shell choice matters for an agent task, prefer Bash unless the user explicitly asks about zsh.
 
-## Working Rules
+Run `scripts/agents-syncs.sh` only when syncing local live agent config is intended.
 
-Read directly related files before editing. For shell changes, inspect the startup chain and adjacent docs before patching.
+Do not duplicate machine inventory, LAN details, serials, or private operational notes in this public repo.
 
-Keep changes small and direct. If a simpler approach solves the problem, propose it or use it.
+## Validation
 
-Do not revert user changes unless explicitly requested.
+For docs-only changes, scan changed docs for stale placeholders, private paths, and old layout names.
 
-Do not commit unless explicitly asked. If a commit is requested, use a conventional commit message.
+For Bash changes, run `bash -n dots/.bashrc dots/.profile` and `shellcheck dots/.bashrc dots/.profile`.
 
-Never push unless the user explicitly asks.
-
-Do not add assistant names, co-authorship metadata, or agent branding unless explicitly requested.
-
-## Fleet Updates
-
-Dotfile deployment across the network must be confirmation-gated.
-
-Before copying files to another machine, show the target hosts, source files, destination paths, and commands that will run.
-
-Wait for explicit user confirmation before changing remote machines.
-
-Use the local hardware inventory repo as the durable source of truth for host inventory and access notes. Resolve it from `$HARDWARE_REPO` when set, otherwise use `$HOME/Repos/hardware` as the local convention.
-
-## Documentation
-
-Use single-line paragraphs in Markdown.
-
-Update routed docs when behavior, architecture, setup, or workflow changes.
-
-Use `docs/tasks.md` for transparent current work and `docs/fleet-sync.md` for fleet deployment expectations.
+For agent-config changes, run `bash -n scripts/agents-syncs.sh` and `shellcheck scripts/agents-syncs.sh`.
