@@ -38,8 +38,8 @@ if [[ -z "${GHREPOS:-}" ]]; then
   fi
 fi
 
-if [[ -z "${DOTFILES:-}" && -d "$REPOS/dotfiles" ]]; then
-  export DOTFILES="$REPOS/dotfiles"
+if [[ -z "${DOTFILES:-}" && -d "$GHREPOS/dotfiles" ]]; then
+  export DOTFILES="$GHREPOS/dotfiles"
 fi
 
 # ------------------------------- paths --------------------------------

@@ -82,8 +82,8 @@ export REPOS="${REPOS:-$HOME/Repos}"
 export GHDIR="${GHDIR:-$REPOS/github.com}"
 export GITUSER="${GITUSER:-$USER}"
 export GHREPOS="${GHREPOS:-$GHDIR/$GITUSER}"
-if [[ -z "${DOTFILES:-}" && -d "$REPOS/dotfiles" ]]; then
-  export DOTFILES="$REPOS/dotfiles"
+if [[ -z "${DOTFILES:-}" && -d "$GHREPOS/dotfiles" ]]; then
+  export DOTFILES="$GHREPOS/dotfiles"
 fi
 
 export EDITOR="${EDITOR:-vi}"
