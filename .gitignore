@@ -1,0 +1,28 @@
+# macOS and filesystem noise.
+.DS_Store
+._*
+
+# Editor and local tool state.
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Runtime/cache files created while testing dotfiles with HOME pointed here.
+.cache/
+.local/
+
+# Logs, temporary files, and local backups.
+*.log
+*.tmp
+*.bak
+*.orig
+*.rej
+
+# Private machine-local overrides should stay out of the public repo.
+*.local
+*.local.*
+*.secret
+*.secret.*
+.env
