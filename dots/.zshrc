@@ -44,6 +44,8 @@ fi
 
 # ------------------------------- paths --------------------------------
 path_prepend "$HOME/.local/bin"
+path_prepend /opt/homebrew/bin
+path_prepend /opt/homebrew/sbin
 
 # Node is managed by mise. Bun is installed with the official Bun installer.
 if [[ -x "$HOME/.local/bin/mise" ]]; then
@@ -327,6 +329,55 @@ dtag() {
   epoch=$(date -d "$when" +%s) || return 1
   echo "Discord tag for your local time $when - copy this into the chat box:"
   echo "<t:$epoch:F>"
+}
+
+termopacity() {
+  local value config link_target tmp
+
+  if [[ $# -ne 1 ]]; then
+    echo "usage: termopacity 0..1" >&2
+    return 2
+  fi
+
+  value="$1"
+  if ! awk -v value="$value" 'BEGIN { exit !(value ~ /^(0(\.[0-9]+)?|1(\.0+)?|\.[0-9]+)$/) }'; then
+    echo "termopacity: value must be from 0 to 1" >&2
+    return 2
+  fi
+
+  config="${GHOSTTY_CONFIG:-$HOME/.config/ghostty/config}"
+  if [[ -L "$config" ]]; then
+    link_target=$(readlink "$config") || return 1
+    [[ "$link_target" == /* ]] || link_target="${config:h}/$link_target"
+    config="$link_target"
+  fi
+
+  command mkdir -p "${config:h}"
+  tmp="${config}.tmp.$$"
+  if [[ -e "$config" ]] && command grep -q '^background-opacity[[:space:]]*=' "$config"; then
+    awk -v value="$value" '
+      /^background-opacity[[:space:]]*=/ && !updated {
+        print "background-opacity = " value
+        updated = 1
+        next
+      }
+      { print }
+    ' "$config" > "$tmp" || {
+      command rm -f "$tmp"
+      return 1
+    }
+  else
+    {
+      [[ -e "$config" ]] && cat "$config"
+      print -r -- "background-opacity = $value"
+    } > "$tmp" || {
+      command rm -f "$tmp"
+      return 1
+    }
+  fi
+
+  command mv -f "$tmp" "$config"
+  print -r -- "background-opacity = $value"
 }
 
 rgb() {
