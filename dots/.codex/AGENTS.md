@@ -10,6 +10,11 @@
 - Cloned third-party repos: for upstream contributions, use the repo's own manager and lockfile; for local-only use, try `bun` first and fall back if incompatible. Never commit a swapped lockfile.
 - Python: always use `uv` (and `uvx` for running tools).
 
+## Shell Fast Paths
+- For a local interactive agent or recovery shell, use `DOTFILES_AGENT_SHELL=1 bash -i`.
+- For local one-off commands, prefer `bash -lc 'command here'`; when the command needs the managed Bash environment, tool paths, or CDPATH first, use `DOTFILES_AGENT_SHELL=1 bash -ic 'command here'`.
+- The fast path loads core environment, tool paths, and CDPATH, then skips prompts, completions, tmux auto-attach, and heavier interactive setup.
+
 ## Core Working Rules
 
 - Read directly related files before editing; do not infer behavior from filenames alone.
@@ -33,3 +38,13 @@
 - Do not repeat global defaults unless the repo may be used without this global config or needs a stricter local rule.
 - Prefer routing to focused docs over front-loading long architecture, command, or history sections.
 - Preserve enough context for safe work: read order, repo-specific commands, safety boundaries, and validation.
+
+# Home hardware & network (pointer)
+
+The full hardware inventory lives in a local hardware inventory repo.
+
+Resolve it from `$HARDWARE_REPO` when set, otherwise use `$HOME/Repos/hardware` as the local convention.
+
+When a task involves machines, network, peripherals, or IoT, read the relevant hardware inventory file first and log notable changes to the device maintenance log.
+
+Do not duplicate machine inventory, LAN details, serials, or private operational notes in this public dotfiles repo.

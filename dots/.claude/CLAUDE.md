@@ -11,6 +11,11 @@
 - Cloned third-party repos: for upstream contributions, use the repo's own manager and lockfile; for local-only use, try `bun` first and fall back if incompatible. Never commit a swapped lockfile.
 - Python: always use `uv` (and `uvx` for running tools).
 
+## Shell Fast Paths
+- For a local interactive agent or recovery shell, use `DOTFILES_AGENT_SHELL=1 bash -i`.
+- For local one-off commands, prefer `bash -lc 'command here'`; when the command needs the managed Bash environment, tool paths, or CDPATH first, use `DOTFILES_AGENT_SHELL=1 bash -ic 'command here'`.
+- The fast path loads core environment, tool paths, and CDPATH, then skips prompts, completions, tmux auto-attach, and heavier interactive setup.
+
 ## Core Working Rules
 
 - Read directly related files before editing; do not infer behavior from filenames alone.
