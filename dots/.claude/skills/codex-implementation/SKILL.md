@@ -1,6 +1,6 @@
 ---
 name: codex-implementation
-description: Delegate a scoped implementation task to the Codex CLI (gpt-5.5), which edits the repo directly, then have Claude inspect the resulting diff and verification. This is how Codex/gpt-5.5 is invoked for implementation work. Use whenever the user asks to hand work off to Codex or GPT, says things like "let codex do it", "have gpt implement this", "delegate this", when the model-selection rubric routes the work to gpt-5.5, or when a bounded task would benefit from a parallel coding agent producing a patch while Claude works on something else. For review-only requests, use the codex-review skill instead.
+description: Delegate a scoped implementation task to the Codex CLI (GPT), which edits the repo directly, then have Claude inspect the resulting diff and verification. This is how Codex/GPT is invoked for implementation work. Use whenever the user asks to hand work off to Codex or GPT, says things like "let codex do it", "have gpt implement this", "delegate this", when the model-selection rubric routes the work to Codex, or when a bounded task would benefit from a parallel coding agent producing a patch while Claude works on something else. For review-only requests, use the codex-review skill instead.
 ---
 
 # Codex Implementation

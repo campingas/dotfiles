@@ -1,6 +1,6 @@
 ---
 name: codex-review
-description: Get an independent code review from the Codex CLI (gpt-5.5) on uncommitted changes, a branch diff, a single commit, or a specific implementation. This is how Codex/gpt-5.5 is invoked for review work. Use whenever the user asks to have Codex or GPT review something, wants a second opinion or second pass on a change, says things like "double-check my work", "ask codex", "have another model look at this", or when a change is broad or risky enough that an outside perspective is worth it before shipping. For a review by Claude itself, use the normal review process instead.
+description: Get an independent code review from the Codex CLI (GPT) on uncommitted changes, a branch diff, a single commit, or a specific implementation. This is how Codex/GPT is invoked for review work. Use whenever the user asks to have Codex or GPT review something, wants a second opinion or second pass on a change, says things like "double-check my work", "ask codex", "have another model look at this", or when a change is broad or risky enough that an outside perspective is worth it before shipping. For a review by Claude itself, use the normal review process instead.
 ---
 
 # Codex Review

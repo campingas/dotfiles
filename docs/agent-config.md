@@ -38,6 +38,10 @@ Agent profiles that already exist in the live agent directory but do not point i
 
 ## Subagent Dispatch
 
+Claude dispatches automatically under the same limits (at most three children, one writer), runs fable-5 at high effort with opus-4.8 at high effort as the only fallback, and prefers routing bulk work to Codex over Opus.
+
+The full Claude routing and dispatch policy lives in `dots/.claude/CLAUDE.md` under "Model routing and automatic dispatch".
+
 Codex delegates selectively when a bounded independent task benefits from parallel work or context isolation. It uses at most three children concurrently and only one writing agent.
 
 Reasoning effort defaults to `high`. Only the `scout` profile uses `medium`, for work that is obviously straightforward, low-risk, and tightly scoped. No managed profile may use another effort level.

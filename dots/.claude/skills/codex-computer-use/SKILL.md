@@ -1,6 +1,6 @@
 ---
 name: codex-computer-use
-description: Ask Codex CLI (gpt-5.5) to run local verification that needs computer use: browser automation, simulators, screenshots, app launching, or independent runtime inspection of a running app. This is how Codex/gpt-5.5 is invoked for computer-use work. Use whenever the user asks Claude to test a flow end-to-end, verify UI behavior, inspect a running app, capture screenshots, click through a page, or confirm implemented behavior actually works at runtime, even if they don't say "computer use". For code review use codex-review; for making code changes use codex-implementation.
+description: Ask Codex CLI (GPT) to run local verification that needs computer use: browser automation, simulators, screenshots, app launching, or independent runtime inspection of a running app. This is how Codex/GPT is invoked for computer-use work. Use whenever the user asks Claude to test a flow end-to-end, verify UI behavior, inspect a running app, capture screenshots, click through a page, or confirm implemented behavior actually works at runtime, even if they don't say "computer use". For code review use codex-review; for making code changes use codex-implementation.
 ---
 
 # Codex Computer Use

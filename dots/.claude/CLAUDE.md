@@ -16,7 +16,7 @@
 
 ## General preferences
 - If asked to do too much work at once, stop and state that clearly.
-- If computer use is helpful for completing or verifying work, shell out to gpt-5.5 with Codex for it.
+- If computer use is helpful for completing or verifying work, shell out to Codex for it.
 
 ## Package managers
 - TypeScript/JavaScript: prefer `bun`, then `pnpm`. Never use `npm` or `yarn`.
@@ -49,31 +49,38 @@
 - Use plain ASCII punctuation. Do not use em dashes or en dashes; use commas, periods, parentheses, colons, or hyphens instead.
 
 
-## Picking the right models for workflows and subagents
+## Model routing and automatic dispatch
 
-Rankings, higher = better. Cost reflects what I actually pay (OpenAI is near-free for me due to a deal), not list price. Intelligence is how hard a problem you can hand the model unsupervised. Taste covers UI/UX, code quality, API design, and copy.
+Cost context: OpenAI is near-free for me due to a deal, so Codex work is effectively free; Claude tokens are the scarce resource.
 
-| model | cost | intelligence | taste |
-|-------|------|--------------|-------|
-| gpt-5.5 | 9 | 8 | 5 |
-| sonnet-5 | 5 | 5 | 7 |
-| opus-4.8 | 4 | 7 | 8 |
-| fable-5 | 2 | 9 | 9 |
+| lane | default | fallback |
+|------|---------|----------|
+| Claude (main thread, taste-critical work, integration, final decisions) | fable-5 at high effort | opus-4.8 at high effort |
+| Codex dispatch (bulk implementation, review, investigation, verification) | gpt-5.6 family via Codex's own agent profiles | gpt-5.5 compat |
 
-How to apply:
-- These are defaults, not limits. You have standing permission to override them: if a cheaper model's output doesn't meet the bar, rerun or redo the work with a smarter model without asking. Judge the output, not the price tag. Escalating costs less than shipping mediocre work.
-- Bulk/mechanical work (clear-spec implementation, data analysis, migrations): gpt-5.5 is effectively free.
-- Anything user-facing (UI, copy, API design) needs taste >= 7.
-- Reviews of plans/implementations: fable-5 or opus-4.8, optionally gpt-5.5 as an extra independent perspective.
-- Never use Haiku.
-- Mechanics: gpt-5.5 is only reachable through the Codex CLI: `codex exec` / `codex review` (my `~/.codex/config.toml` defaults to gpt-5.5). Use the codex-implementation, codex-review, and codex-computer-use skills; for work they don't cover (investigation, data analysis), run `codex exec -s read-only` directly with a self-contained prompt.
-- Claude models (sonnet-5, opus-4.8, fable-5) run via the Agent/Workflow model parameter.
+Claude model policy:
+- Use fable-5 at high effort by default. Fall back to opus-4.8 at high effort only when fable-5 is unavailable.
+- Never use any other Claude model or effort level (no sonnet, no haiku, no low or medium effort). Sole exception: the thin Codex wrapper below.
+- Preference order for delegated work: fable-5 high, then Codex dispatch, then opus-4.8 high. Prefer handing work to Codex over spending Opus on it.
+- Anything user-facing (UI, copy, API design) or taste-critical stays on the Claude lane.
+- Standing permission: if delegated output does not meet the bar, redo it on a smarter lane without asking. Judge the output, not the price tag.
 
-Using gpt-5.5 inside workflows and subagents (the model parameter only takes Claude models, so use a wrapper):
-- Spawn a thin Claude wrapper agent with `model: 'sonnet', effort: 'low'` whose prompt instructs it to write a self-contained codex prompt, run `codex exec` via Bash, and return the report (use `schema` on the wrapper to get structured output back).
-- Always label these agents with a `gpt-5.5:` prefix, e.g. `{label: 'gpt-5.5:review-auth'}`. The workflow UI shows the wrapper's Claude model, so the label is the only indication the real worker is gpt-5.5.
+Automatic dispatch (mirror of the Codex dispatch rules):
+- On every prompt, assess whether bounded independent subtasks benefit from parallel work or context isolation, and delegate them without being asked.
+- Do not delegate trivial work, tightly coupled changes, or tasks without a concrete independent objective.
+- Run no more than three child agents concurrently and no more than one writing agent at a time.
+- Give each child a clear objective, constraints, expected output, and file ownership; keep integration and final decisions in the main thread.
+- Route bulk or mechanical subtasks (clear-spec implementation, data analysis, migrations, independent review passes) to Codex; it dispatches internally to its own matrix (scout, explorer, worker, expert_worker, reviewer per `~/.codex/AGENTS.md`), so hand it the task, not a model choice.
+
+Codex mechanics:
+- Codex is reached through the Codex CLI: `codex exec` / `codex review` (my `~/.codex/config.toml` defaults to gpt-5.6-sol at high effort).
+- Use the codex-implementation, codex-review, and codex-computer-use skills; for work they don't cover (investigation, data analysis), run `codex exec -s read-only` directly with a self-contained prompt.
 - Codex runs can exceed Bash's 10-minute timeout: pass an explicit timeout, or run in the background and poll for the report file.
-- Parallel gpt-5.5 implementation agents must use `isolation: 'worktree'` so codex edits don't collide in the shared checkout.
+- Parallel Codex implementation agents must use `isolation: 'worktree'` so codex edits don't collide in the shared checkout.
+
+Codex inside workflows and subagents (the model parameter only takes Claude models, so use a wrapper):
+- Spawn a thin Claude wrapper agent with `model: 'sonnet', effort: 'low'` whose prompt instructs it to write a self-contained codex prompt, run `codex exec` via Bash, and return the report (use `schema` on the wrapper to get structured output back). This is the one allowed use of sonnet: the wrapper is a dumb shell and the real worker is Codex.
+- Always label these agents with a `codex:` prefix, e.g. `{label: 'codex:review-auth'}`. The workflow UI shows the wrapper's Claude model, so the label is the only indication the real worker is Codex.
 - Workflow token budgets only count Claude tokens; codex work is free and invisible to `budget.spent()`.
 
 # Home hardware & network (pointer)
