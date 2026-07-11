@@ -376,7 +376,12 @@ termopacity() {
     }
   fi
 
-  command mv -f "$tmp" "$config"
+  command mv -f "$tmp" "$config" || return 1
+
+  if [[ -n "${CMUX_WORKSPACE_ID:-}" ]] && command -v cmux >/dev/null 2>&1; then
+    cmux reload-config || return 1
+  fi
+
   print -r -- "background-opacity = $value"
 }
 
