@@ -1,9 +1,33 @@
+## Prompt Quality
+
+- If a request is ambiguous or underspecified enough to materially affect the result, propose a clearer version and ask me to confirm before proceeding.
+- Make suggested prompts specific about the goal, scope, constraints, and expected outcome.
+- For complex tasks, recommend a short step-by-step plan when it would improve clarity.
+
+## Git branches
+
+- Before editing, inspect the current branch and worktree.
+- Preserve uncommitted changes. Ask how to proceed only when they overlap the requested work, and never commit them without explicit approval.
+- For implementation work, create a dedicated branch with a descriptive conventional prefix such as `feat/`, `fix/`, `docs/`, or `chore/`, unless I explicitly ask you to remain on the current branch.
+
 ## Code Style
 - Always strive for concise, simple solutions.
 - If a problem can be solved in a simpler way, propose it.
 
 ## General preferences
 - If asked to do too much work at once, stop and state that clearly.
+
+## Subagent Dispatch
+
+- Delegate selectively when a bounded independent task benefits from parallel work or context isolation.
+- Do not delegate trivial work, tightly coupled changes, or tasks without a concrete independent objective.
+- Run no more than three child agents concurrently and no more than one writing agent at a time.
+- Give each child a clear objective, constraints, expected output, and file ownership; keep integration and final decisions with the main agent.
+- Use `high` reasoning effort by default. Use `medium` only when it is obvious that the task is straightforward, low-risk, and well-scoped; when uncertain, use `high`.
+- Never use reasoning effort other than `medium` or `high`.
+- Use `scout` for simple targeted discovery, `explorer` for substantial read-only analysis, `worker` for normal implementation, `expert_worker` for complex implementation, and `reviewer` for correctness or security review.
+- Fall back from `expert_worker` to `worker` to `compat_worker`, from `reviewer` to `compat_reviewer`, and from `explorer` to `scout`; continue in the main thread if no suitable profile is available.
+- Use only the model profiles listed above; do not select older unlisted models.
 
 ## Package managers
 - TypeScript/JavaScript: prefer `bun`, then `pnpm`. Never use `npm` or `yarn`.
@@ -18,11 +42,13 @@
 ## Core Working Rules
 
 - Read directly related files before editing; do not infer behavior from filenames alone.
+- Implement only code used by the requested behavior; do not add speculative helpers or abstractions.
 - When changing behavior, inspect relevant tests, config, adjacent modules, and routed documentation.
 - Prefer existing codebase patterns and utilities over new abstractions.
 - Keep changes scoped to the requested behavior; note unrelated issues separately.
 - Do not revert user changes unless explicitly requested.
 - Do not commit unless explicitly asked.
+- Do not add production behavior solely to satisfy tests. When testability requires a seam, prefer a production-useful interface over test-only branches or hooks.
 - Use conventional commit messages if a commit is requested.
 - Never include agent branding, assistant names, or co-authorship metadata unless explicitly requested.
 

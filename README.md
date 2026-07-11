@@ -10,7 +10,7 @@ Agent Bash has a fast path for lower startup latency. Details and benchmark numb
 
 Managed files live in `dots/`. Setup and operational notes live in `docs/`.
 
-Agent configuration is managed here too: `dots/.claude/CLAUDE.md`, `dots/.codex/AGENTS.md`, Claude skills under `dots/.claude/skills/`, and Codex skills under `dots/.codex/skills/`.
+Agent configuration is managed here too: `dots/.claude/CLAUDE.md`, `dots/.codex/AGENTS.md`, skills under the runtime-specific `skills/` directories, and Codex subagent profiles under `dots/.codex/agents/`.
 
 Fleet updates are confirmation-gated. An agent may prepare the list of files and target machines, but it must show the plan and wait for confirmation before copying dotfiles across the network.
 
@@ -34,7 +34,7 @@ The managed zsh setup initializes Starship when it is available, so machines wit
 
 Run `scripts/agents-syncs.sh` after editing config files or adding a skill.
 
-It copies `dots/.claude/CLAUDE.md` to `~/.claude/CLAUDE.md`, copies `dots/.codex/AGENTS.md` to `~/.codex/AGENTS.md`, symlinks skills into `~/.claude/skills/` and `~/.codex/skills/`, and prunes stale symlinks that point back into this repo.
+It copies `dots/.claude/CLAUDE.md` to `~/.claude/CLAUDE.md`, copies `dots/.codex/AGENTS.md` to `~/.codex/AGENTS.md`, symlinks skills and Codex subagent profiles into their live directories, and prunes stale symlinks that point back into this repo.
 
 The repo is the source of truth: live copies are overwritten (the replaced diff is printed), and the script is idempotent.
 

@@ -12,7 +12,7 @@ Keep fleet updates confirmation-gated. Agents may prepare a deployment plan, but
 
 ## Open Items
 
-Run `scripts/agents-syncs.sh` after changing `dots/.claude/CLAUDE.md`, `dots/.codex/AGENTS.md`, `dots/.claude/skills/`, or `dots/.codex/skills/`.
+Run `scripts/agents-syncs.sh` after changing managed Claude or Codex instructions, skills, or Codex subagent profiles.
 
 Design a fleet-sync helper only after the local dotfile and agent-config sync workflow has settled.
 
@@ -25,6 +25,8 @@ The former standalone skills repo content now lives under `dots/.claude/` and `d
 `docs/bash.md` defines Bash fast-path behavior and validation.
 
 `repo-agents-md` now captures the workflow for concise repo-specific agent contracts.
+
+Codex now uses selective model-pinned subagent profiles with high reasoning by default and medium only for obvious scout work.
 
 ## Validation
 

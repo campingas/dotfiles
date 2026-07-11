@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-07-09
+Last updated: 2026-07-11
 
 ## Status
 
@@ -16,9 +16,13 @@ Claude skills live under `dots/.claude/skills/` and are linked into `~/.claude/s
 
 Codex skills live under `dots/.codex/skills/` and are linked into `~/.codex/skills/` by `scripts/agents-syncs.sh`.
 
+Codex subagent profiles live under `dots/.codex/agents/` and are linked into `~/.codex/agents/` by `scripts/agents-syncs.sh`.
+
 The repo-authored Claude skills are `codex-review`, `codex-implementation`, `codex-computer-use`, and `html-planning`.
 
 The repo-authored Codex skill is `repo-agents-md`.
+
+The repo-authored Codex agents are `scout`, `explorer`, `worker`, `expert_worker`, `reviewer`, `compat_worker`, and `compat_reviewer`.
 
 ## Durable Decisions
 
@@ -29,6 +33,8 @@ Repo-local `AGENTS.md` files should avoid duplicating global defaults.
 `docs/bash.md` owns Bash fast-path details and validation.
 
 `docs/agent-config.md` owns Claude, Codex, and skill sync behavior.
+
+Codex subagent dispatch is selective, uses high reasoning by default, allows medium only for obvious scout work, and selects only models in the managed portfolio.
 
 `docs/fleet-sync.md` owns remote-machine deployment expectations.
 

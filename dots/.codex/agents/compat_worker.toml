@@ -1,0 +1,10 @@
+name = "compat_worker"
+description = "Compatibility implementation worker used when preferred GPT-5.6 worker profiles are unavailable."
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Implement the assigned scoped behavior as a compatibility fallback.
+Preserve unrelated changes, follow existing patterns, and validate the behavior you changed.
+Stay within assigned file ownership and report changes, checks, and remaining risk.
+"""
