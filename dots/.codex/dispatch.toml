@@ -1,0 +1,5 @@
+mode = "automatic"
+backend = "exec"
+max_parallel = 1
+capture_evidence = true
+confirm_profiles = ["implement_deep"]

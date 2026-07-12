@@ -51,30 +51,34 @@
 
 ## Model routing and automatic dispatch
 
-Cost context: OpenAI is near-free for me due to a deal, so Codex work is effectively free; Claude tokens are the scarce resource.
+Protect both Claude and Codex subscription limits. Prefer the lowest configuration that preserves the needed quality, and escalate only for explicit risk or demonstrated reasoning limits.
 
 | lane | default | fallback |
 |------|---------|----------|
-| Claude (main thread, taste-critical work, integration, final decisions) | fable-5 at high effort | opus-4.8 at high effort |
-| Codex dispatch (bulk implementation, review, investigation, verification) | gpt-5.6 family via Codex's own agent profiles | gpt-5.5 compat |
+| Claude (main thread, integration, final decisions) | fable-5 at medium effort | fable-5 at high effort, then opus-4.8 high if Fable is unavailable |
+| Codex bounded work | Sol medium, selected through the intended agent profile | Terra high when latency matters or Sol is unavailable or usage-limited |
 
 Claude model policy:
-- Use fable-5 at high effort by default. Fall back to opus-4.8 at high effort only when fable-5 is unavailable.
-- Never use any other Claude model or effort level (no sonnet, no haiku, no low or medium effort). Sole exception: the thin Codex wrapper below.
-- Preference order for delegated work: fable-5 high, then Codex dispatch, then opus-4.8 high. Prefer handing work to Codex over spending Opus on it.
+- Use fable-5 at medium effort by default for requirements, planning, integration, final decisions, and small tightly coupled edits.
+- Raise Fable to high only for security-sensitive reasoning, architecture with expensive consequences, migrations, release decisions, cross-system debugging, or an incomplete medium result.
+- Fall back to opus-4.8 at high effort only when Fable is unavailable. Do not use other Claude models or effort levels except for the thin Codex wrapper below.
+- Prefer Codex for bounded implementation and verification, but do not delegate a trivial task merely to save main-thread tokens.
 - Anything user-facing (UI, copy, API design) or taste-critical stays on the Claude lane.
-- Standing permission: if delegated output does not meet the bar, redo it on a smarter lane without asking. Judge the output, not the price tag.
+- Escalate one level without asking when validation or concrete evidence shows a reasoning-quality gap. Do not restart on a stronger lane because the prompt or environment was incomplete.
 
 Automatic dispatch (mirror of the Codex dispatch rules):
 - On every prompt, assess whether bounded independent subtasks benefit from parallel work or context isolation, and delegate them without being asked.
 - Do not delegate trivial work, tightly coupled changes, or tasks without a concrete independent objective.
-- Run no more than three child agents concurrently and no more than one writing agent at a time.
-- Give each child a clear objective, constraints, expected output, and file ownership; keep integration and final decisions in the main thread.
-- Route bulk or mechanical subtasks (clear-spec implementation, data analysis, migrations, independent review passes) to Codex; it dispatches internally to its own matrix (scout, explorer, worker, expert_worker, reviewer per `~/.codex/AGENTS.md`), so hand it the task, not a model choice.
+- Use no child for simple work and one child by default when isolation helps. Use two only for clearly independent objectives and three only for an explicit rush trigger; never run more than one writer.
+- Give each child an objective, acceptance criteria, behavior boundary, exclusions, required validation, completion condition, and stop conditions; keep integration and final decisions in the main thread.
+- Use the Codex profile vocabulary from `~/.codex/AGENTS.md`: `lookup`, `investigate`, `implement`, `implement_fast`, `implement_deep`, `review`, and `review_fast`.
+- Add a separate review only for security, migrations, releases, cross-system behavior, weak validation, or an implementation that required escalation.
+- Require delegated work to stop after acceptance criteria and risk-proportional validation pass, without adjacent cleanup, abstraction, polishing, tuning, or repeated failure loops.
 
 Codex mechanics:
 - Codex is reached through the Codex CLI: `codex exec` / `codex review` (my `~/.codex/config.toml` defaults to gpt-5.6-sol at high effort).
 - Use the codex-implementation, codex-review, and codex-computer-use skills; for work they don't cover (investigation, data analysis), run `codex exec -s read-only` directly with a self-contained prompt.
+- Codex CLI 0.144.1 does not yet prove named-role selection under `codex exec`; do not claim a profile-specific model ran unless session metadata confirms it.
 - Codex runs can exceed Bash's 10-minute timeout: pass an explicit timeout, or run in the background and poll for the report file.
 - Parallel Codex implementation agents must use `isolation: 'worktree'` so codex edits don't collide in the shared checkout.
 

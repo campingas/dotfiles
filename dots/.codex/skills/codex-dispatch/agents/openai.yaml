@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Dispatch"
+  short_description: "Route bounded work to pinned Codex profiles"
+  default_prompt: "Use $codex-dispatch to route this bounded task to the best configured Codex profile."

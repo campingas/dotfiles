@@ -122,6 +122,7 @@ sync_agent_tree() {
 main() {
   copy_file "$repo_root/dots/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
   copy_file "$repo_root/dots/.codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+  copy_file "$repo_root/dots/.codex/dispatch.toml" "$HOME/.codex/dispatch.toml"
 
   sync_skill_tree "$repo_root/dots/.claude/skills" "$HOME/.claude/skills"
   sync_skill_tree "$repo_root/dots/.codex/skills" "$HOME/.codex/skills"
