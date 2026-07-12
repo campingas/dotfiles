@@ -312,6 +312,16 @@ epoch() {
   date +%s
 }
 
+myip() {
+  local external_ip local_ip
+
+  local_ip=$(ipconfig getifaddr en0 2>/dev/null)
+  external_ip=$(dig +short myip.opendns.com @resolver4.opendns.com 2>/dev/null)
+
+  printf 'External: %s\n' "${external_ip:-unavailable}"
+  printf 'Local: %s\n' "${local_ip:-unavailable}"
+}
+
 isosec() {
   TZ="GMT" date +"%Y%m%d%H%M%S" "$@"
 }
