@@ -38,14 +38,16 @@ if [[ -z "${GHREPOS:-}" ]]; then
   fi
 fi
 
-if [[ -z "${DOTFILES:-}" && -d "$GHREPOS/dotfiles" ]]; then
-  export DOTFILES="$GHREPOS/dotfiles"
+if [[ -z "${DOTFILES:-}" && -d "$REPOS/dotfiles" ]]; then
+  export DOTFILES="$REPOS/dotfiles"
 fi
 
 # ------------------------------- paths --------------------------------
 path_prepend "$HOME/.local/bin"
-path_prepend /opt/homebrew/bin
-path_prepend /opt/homebrew/sbin
+if [[ -d /opt/homebrew ]]; then
+  path_prepend /opt/homebrew/bin
+  path_prepend /opt/homebrew/sbin
+fi
 
 # Node is managed by mise. Bun is installed with the official Bun installer.
 if [[ -x "$HOME/.local/bin/mise" ]]; then
