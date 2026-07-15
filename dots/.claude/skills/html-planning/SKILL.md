@@ -1,11 +1,11 @@
 ---
 name: html-planning
-description: Render an implementation plan or a standalone report as a polished standalone HTML page (dark engineering-doc style, syntax-highlighted code, dense technical prose) the user opens in Google Chrome, then silently archive it to the user's plan-saver website. Use whenever the user asks for "planning-html" or "html-planning", asks to render or export a plan as HTML, asks for an HTML report on any topic ("write me an html report on X", "give me a report on the state of Y"), AND whenever presenting a non-trivial implementation plan in plan mode. The user wants their plans as HTML artifacts by default, even without being asked. The HTML complements the normal plan flow; it never replaces plan-approval via ExitPlanMode.
+description: Render every non-trivial implementation plan and requested report as a polished standalone HTML page, deliver it locally, and automatically archive it to Plan-Saver with stable project/document identity and append-only versions. Use for "planning-html" or "html-planning", HTML plan/report exports, requested reports or audits, and non-trivial plans in plan mode. Designed for Codex, Claude Code, and other agents that can run Bash skills.
 ---
 
 # HTML Planning
 
-Render the plan or report you generated as a self-contained HTML file the user can open in Google Chrome. This is a presentation layer on top of normal work. Do the actual planning or research exactly as usual, and in plan mode still submit the markdown plan through ExitPlanMode for approval. The HTML is the human-readable artifact, not the approval mechanism.
+Render the plan or report as a self-contained HTML file the user can open in Google Chrome, then archive it to Plan-Saver. This is a presentation layer on top of normal work. In plan mode, still submit the normal markdown plan for approval; the HTML never replaces the runtime's approval mechanism.
 
 ## Document kinds
 
@@ -30,6 +30,7 @@ The design is an always-dark engineering document. Think internal design doc or 
 - Write like an engineer. Dense technical prose with real reasoning, not bullet-fragment filler. Cite files, symbols, PRs, and issues inline as `<code>` or links, such as `infra/src/capsule/ir-executor.ts`, not "the executor file".
 - The TL;DR callout is mandatory and comes first: one dense paragraph a reader could stop after. For plans: what's broken or missing, the shape of the fix, key files inline, what is explicitly out of scope. For reports: the question, the headline answer, the strongest evidence, the top recommendation.
 - The title carries a small badge for priority/kind (e.g. "P2 · platform protection", "report · security audit"); the subtitle line gives project, date, and provenance (branch, ticket, data range).
+- Replace `{{AGENT_NAME}}` with the runtime's human-readable product name: `Codex`, `Claude`, or the actual name used by another agent.
 - **At most 2 emoji in the whole document**, and only where one genuinely earns its place. No icon-per-section, no icon-per-step. Section headings are plain bold text.
 - Plan steps and report findings are numbered `h3` headings followed by prose and optional code, not boxed cards.
 - Code snippets use `<pre><code class="language-xxx">` so highlight.js styles them; HTML-escape snippet content (`<` to `&lt;`, `&` to `&amp;`). Show real code: signatures, diff-shaped parts, commands, evidence excerpts, not filler.
@@ -37,39 +38,33 @@ The design is an always-dark engineering document. Think internal design doc or 
 - Highlight.js loads from a CDN; the template's fallback styling keeps code blocks readable offline, so don't inline a highlighter.
 - Section titles beyond the mandatory ones are flexible. Use what the document needs, keep the document shape.
 
-## Archiving to plan-saver
+## Mandatory Plan-Saver delivery
 
-After writing the file (and sending it to the user), upload it to the user's plan-saver archive. This step is silent: missing config, network failure, or a non-2xx response must never block or noisily interrupt the session. The local file remains the source of truth; on failure just note "not archived" next to the local path.
+Archive every HTML plan or report after writing it. The user has explicitly pre-authorized this exact Plan-Saver upload as part of artifact delivery, including during plan mode. Treat it as delivery of the requested document, not implementation of the plan and not a repository mutation.
+
+Run the bundled deterministic uploader instead of recreating `jq` or `curl` commands:
+
+```bash
+bash "<skill-directory>/scripts/archive.sh" \
+  "$FILE" "$PROJECT" "$SLUG" "$KIND" "$TITLE" "$AGENT"
+```
+
+Resolve `<skill-directory>` to the directory containing this `SKILL.md`. Quote every argument. The uploader reads `${PLAN_SAVER_CONFIG}` when set, otherwise `${XDG_CONFIG_HOME:-$HOME/.config}/plan-saver/config.json`; it never prints the token.
 
 Derive the payload fields:
 
 - `project`: same as `projectName` above (repo basename, kebab-cased).
-- `slug`: the document title, kebab-cased the same way (lowercase, non-alphanumerics collapsed to `-`, trimmed of leading/trailing `-`).
+- `slug`: the document title, kebab-cased the same way (lowercase, non-alphanumerics collapsed to `-`, trimmed of leading/trailing `-`). Keep this stable across revisions; never add a timestamp or version to it.
 - `kind`: `plan` or `report`.
 - `title`: the human-readable document title.
+- `agent`: the human-readable runtime name used in the footer, such as `Codex` or `Claude`. Do not use a model name or version.
 
-Then run (FILE is the HTML path, and the four fields above are shell variables):
+The uploader returns compact JSON. A success contains `{"archived":true,"url":"...","version":n}`. Report the archive URL and version alongside the local file path. The API automatically appends v2, v3, and later versions for the same `(project, slug, kind)`.
 
-```bash
-CFG=~/.config/plan-saver/config.json
-if [ -f "$CFG" ]; then
-  jq -n --arg project "$PROJECT" --arg slug "$SLUG" --arg kind "$KIND" --arg title "$TITLE" \
-        --rawfile html "$FILE" \
-        --arg branch "$(git branch --show-current 2>/dev/null || true)" \
-        --arg repoPath "$PWD" --arg hostname "$(hostname)" \
-        '{project:$project, slug:$slug, kind:$kind, title:$title, html:$html,
-          meta:{branch:$branch, repoPath:$repoPath, generator:"html-planning@2", hostname:$hostname}}' \
-  | curl -sS --fail-with-body -m 30 -X POST "$(jq -r .url "$CFG")/api/v1/documents" \
-      -H "Authorization: Bearer $(jq -r .token "$CFG")" \
-      -H "Content-Type: application/json" --data-binary @- \
-  || echo "plan-saver: not archived"
-fi
-```
-
-A success returns `{"url": "...", "version": n}`. Report that archive URL and version alongside the local file path. Re-generating a document with the same title in the same project intentionally chains v2, v3, and so on under one document.
+Archival is a completion gate: do not finish the response after creating only the local file. If a higher-priority runtime policy blocks the POST, or config/network/server validation fails, preserve the local file and state `not archived: <reason>` explicitly. Never claim or imply that archival succeeded without the uploader's success JSON.
 
 ## When it triggers
 
 - The user says "planning-html" / "html-planning" or asks for a plan as HTML: produce the file even outside plan mode.
 - The user asks for an HTML report, audit, or analysis writeup: produce a `report` kind document.
-- In plan mode: produce the file right before calling ExitPlanMode, so the HTML and the submitted plan say the same thing. A quick throwaway plan ("should I rename this variable?") doesn't need the ceremony; use judgment. Multi-step implementation plans do.
+- In plan mode: produce and archive the file immediately before the runtime's plan-approval response, so the HTML and submitted plan say the same thing. A quick throwaway plan ("should I rename this variable?") does not need the ceremony; multi-step implementation plans do.

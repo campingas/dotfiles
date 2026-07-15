@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-07-12
+Last updated: 2026-07-15
 
 ## Status
 
@@ -20,7 +20,9 @@ Codex subagent profiles live under `dots/.codex/agents/` and are linked into `~/
 
 The repo-authored Claude skills are `codex-review`, `codex-implementation`, `codex-computer-use`, and `html-planning`.
 
-The repo-authored Codex skills are `repo-agents-md` and `codex-dispatch`.
+The repo-authored Codex skills are `repo-agents-md`, `codex-dispatch`, and `html-planning`.
+
+The mirrored `html-planning` skill uses one deterministic uploader for Claude, Codex, and compatible Bash-capable agents. Every generated artifact includes its agent name, is delivered locally, and is archived under a stable project/document identity so Plan-Saver appends versions instead of creating timestamped duplicates.
 
 The repo-authored Codex agents are `lookup`, `investigate`, `implement`, `implement_fast`, `implement_deep`, `review`, and `review_fast`.
 

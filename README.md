@@ -27,7 +27,7 @@ The managed zsh setup initializes Starship when it is available, so machines wit
 | `codex-review` | Claude | Independent code review by Codex CLI (gpt-5.5) |
 | `codex-implementation` | Claude | Delegate scoped implementation to Codex CLI, then review the diff |
 | `codex-computer-use` | Claude | Codex-driven runtime verification: browsers, simulators, screenshots |
-| `html-planning` | Claude | Render implementation plans as standalone dark-themed HTML pages |
+| `html-planning` | Claude, Codex, compatible agents | Render and archive versioned HTML plans and reports with agent attribution |
 | `repo-agents-md` | Codex | Create or update concise repo-specific AGENTS.md files |
 
 ## Installation
