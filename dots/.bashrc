@@ -334,7 +334,15 @@ epoch() {
 myip() {
   local external_ip local_ip
 
-  local_ip=$(ipconfig getifaddr en0 2>/dev/null)
+  if command -v ipconfig >/dev/null 2>&1; then
+    local_ip=$(ipconfig getifaddr en0 2>/dev/null)
+  elif command -v ip >/dev/null 2>&1; then
+    local_ip=$(ip -4 route get 1.1.1.1 2>/dev/null)
+    case "$local_ip" in
+      *" src "*) local_ip=${local_ip#*" src "}; local_ip=${local_ip%% *} ;;
+      *) local_ip= ;;
+    esac
+  fi
   external_ip=$(dig +short myip.opendns.com @resolver4.opendns.com 2>/dev/null)
 
   printf 'External: %s\n' "${external_ip:-unavailable}"
