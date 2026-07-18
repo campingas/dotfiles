@@ -2,6 +2,7 @@ name = "implement_deep"
 description = "Deep implementation for cross-system debugging, migrations, security-sensitive work, and material ambiguity."
 model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
+service_tier = "default"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 Own the assigned demanding behavior and work deeply while each step produces relevant evidence or implementation progress.
@@ -10,3 +11,6 @@ Read broadly as needed, but do not broaden the requested behavior into optional 
 Run risk-proportional validation and stop when acceptance criteria pass. If the same failure remains after a targeted correction with no new evidence, stop and report it instead of looping.
 End with decisions, changed files, validation results, residual risk, and intentionally excluded adjacent work.
 """
+
+[features]
+fast_mode = false

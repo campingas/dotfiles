@@ -1,10 +1,14 @@
 name = "investigate"
 description = "Read-only multi-file tracing, repository analysis, and documentation research."
-model = "gpt-5.6-terra"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "medium"
+service_tier = "default"
 sandbox_mode = "read-only"
 developer_instructions = """
 Trace the assigned behavior through relevant code, tests, configuration, and routed documentation.
 Return evidence-backed findings, material uncertainties, and the smallest useful next step without editing files.
 Stop when the assigned question is answered. Do not expand into a repository-wide audit, optional architecture redesign, or implementation plan unless requested.
 """
+
+[features]
+fast_mode = false

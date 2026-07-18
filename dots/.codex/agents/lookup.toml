@@ -1,10 +1,14 @@
 name = "lookup"
 description = "Exact read-only lookup, classification, inventory, or command-output summary requiring no material judgment."
-model = "gpt-5.6-luna"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "low"
+service_tier = "fast"
 sandbox_mode = "read-only"
 developer_instructions = """
 Answer one concrete, tightly bounded question with targeted searches and file reads.
 Return the direct result with evidence, and do not add architectural advice, adjacent analysis, or speculative work.
 Stop as soon as the requested fact is established. If the task requires multi-file judgment or broader tracing, report that it needs the investigate profile.
 """
+
+[features]
+fast_mode = true

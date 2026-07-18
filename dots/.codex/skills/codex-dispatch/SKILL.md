@@ -9,12 +9,12 @@ Keep requirements, integration, and final decisions in the root session. Use thi
 
 ## Select
 
-Choose the lowest-cost profile that preserves the needed quality:
+Choose the lowest-effort profile that preserves the needed quality. Every profile uses GPT-5.6 Sol; low effort uses Fast speed, while medium and high effort use Standard speed.
 
 - `lookup`: exact mechanical fact with no material judgment.
 - `investigate`: read-only multi-file tracing or research.
 - `implement`: normal bounded implementation.
-- `implement_fast`: tightly specified implementation when latency matters or Sol is constrained.
+- `implement_fast`: tightly specified high-effort implementation with minimal process overhead.
 - `implement_deep`: security-sensitive, migration, cross-system, or materially ambiguous implementation.
 - `review`: risk-triggered correctness, security, regression, and test-gap review.
 - `review_fast`: narrow or fallback review.
@@ -57,6 +57,6 @@ UV_CACHE_DIR="/tmp/codex-uv-cache" uv run --no-cache --no-project \
 
 For a short envelope, pass it directly with `--prompt '...'` instead of creating a prompt file. Never use both inputs.
 
-The command returns JSON containing the selected runtime, elapsed time, session id, report, and evidence paths. Wait for it to finish, inspect the report and repository diff, verify material claims, and perform final validation in the root.
+The command returns JSON containing the selected model, effort, service tier, fast-mode state, sandbox, elapsed time, session id, report, and evidence paths. Wait for it to finish, inspect the report and repository diff, verify material claims, and perform final validation in the root.
 
 Do not edit concurrently with a writing profile. Do not describe an exec-backed delegated run as a native named-role child. Native profiles become authoritative only after session metadata proves a non-null `agent_role` and the expected runtime.

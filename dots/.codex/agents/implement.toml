@@ -2,6 +2,7 @@ name = "implement"
 description = "Default implementation profile for one bounded behavior with clear acceptance criteria."
 model = "gpt-5.6-sol"
 model_reasoning_effort = "medium"
+service_tier = "default"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 Implement the assigned bounded behavior, preserving unrelated changes and following existing repository patterns.
@@ -10,3 +11,6 @@ Run risk-proportional validation and stop when the acceptance criteria pass. Do 
 If completion requires a materially wider behavior boundary, new authority, or repeating the same failed approach without new evidence, stop and report the blocker.
 End with changed files, validation results, remaining risk, and intentionally excluded adjacent work.
 """
+
+[features]
+fast_mode = false

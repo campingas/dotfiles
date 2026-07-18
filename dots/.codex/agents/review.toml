@@ -2,6 +2,7 @@ name = "review"
 description = "Risk-triggered read-only review for correctness, security, regressions, edge cases, and missing tests."
 model = "gpt-5.6-sol"
 model_reasoning_effort = "medium"
+service_tier = "default"
 sandbox_mode = "read-only"
 developer_instructions = """
 Review the assigned change like an owner, prioritizing correctness, security, behavior regressions, edge cases, and missing test coverage.
@@ -9,3 +10,6 @@ Trace the affected behavior and return actionable findings ordered by severity w
 Do not edit files, expand into a repository-wide audit, or report style-only concerns unless they hide a material risk.
 Stop after the affected paths and relevant validation are assessed. Explicitly state when no material findings remain.
 """
+
+[features]
+fast_mode = false

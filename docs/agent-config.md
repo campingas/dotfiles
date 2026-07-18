@@ -52,17 +52,17 @@ Codex delegates selectively when a bounded independent task benefits from contex
 
 The root Codex session remains the orchestrator. When the installed runtime exposes named roles, it must select a matching custom profile instead of creating an untyped child.
 
-Until named roles pass the strict validation gate, the root uses the `codex-dispatch` skill. The skill launches a separate `codex exec` process with the selected profile's model, reasoning effort, sandbox, and prompt-layer workflow instructions, then returns the report and session evidence to the root.
+Until named roles pass the strict validation gate, the root uses the `codex-dispatch` skill. The skill launches a separate `codex exec` process with the selected profile's model, reasoning effort, speed, sandbox, and prompt-layer workflow instructions, then returns the report and session evidence to the root.
 
-| profile | model and effort | use |
-|---------|------------------|-----|
-| `lookup` | GPT-5.6 Luna low | Exact mechanical facts with no material judgment |
-| `investigate` | GPT-5.6 Terra medium | Read-only multi-file tracing and research |
-| `implement` | GPT-5.6 Sol medium | Normal bounded implementation |
-| `implement_fast` | GPT-5.6 Terra high | Tightly specified work when latency matters or Sol is unavailable or usage-limited |
-| `implement_deep` | GPT-5.6 Sol high | Cross-system debugging, migrations, security-sensitive work, and material ambiguity |
-| `review` | GPT-5.6 Sol medium | Risk-triggered correctness, security, regression, and test-gap review |
-| `review_fast` | GPT-5.6 Luna high | Narrow or fallback review |
+| profile | model | effort | speed | use |
+|---------|-------|--------|-------|-----|
+| `lookup` | GPT-5.6 Sol | low | Fast | Exact mechanical facts with no material judgment |
+| `investigate` | GPT-5.6 Sol | medium | Standard | Read-only multi-file tracing and research |
+| `implement` | GPT-5.6 Sol | medium | Standard | Normal bounded implementation |
+| `implement_fast` | GPT-5.6 Sol | high | Standard | Tightly specified work with minimal process overhead |
+| `implement_deep` | GPT-5.6 Sol | high | Standard | Cross-system debugging, migrations, security-sensitive work, and material ambiguity |
+| `review` | GPT-5.6 Sol | medium | Standard | Risk-triggered correctness, security, regression, and test-gap review |
+| `review_fast` | GPT-5.6 Sol | high | Standard | Narrow or fallback review |
 
 Sol xhigh is a one-off override only after a failed Sol-high attempt or for a genuinely long-horizon frontier task, with the reason recorded. Max effort is not allowed.
 
@@ -70,7 +70,7 @@ Every delegated task defines an objective, acceptance criteria, behavior boundar
 
 The fallback policy is automatic for one bounded run. The launcher enforces confirmation for `implement_deep` and prevents concurrent delegated processes. Global guidance requires confirmation before multiple sequential runs or an xhigh override. A user may override the default with `no delegation`, `propose only`, or an explicit profile.
 
-Codex CLI 0.144.1 does not yet expose the custom-role selector to `codex exec`: spawned children record `agent_role = null` and inherit the root model and effort. Revalidate this boundary after a CLI update before relying on profile-specific execution.
+The last strict native-role probe, on Codex CLI 0.144.4, still recorded `agent_role = null` and inherited the root runtime. Keep using the exec-backed dispatcher until a new probe proves a non-null role together with the configured model, effort, speed, and sandbox.
 
 ## Public Repo Safety
 

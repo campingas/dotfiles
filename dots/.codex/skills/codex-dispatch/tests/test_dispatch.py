@@ -23,6 +23,9 @@ class DispatchTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tempdir = tempfile.TemporaryDirectory()
         self.root = Path(self.tempdir.name)
+        self.previous_dispatch_tmp = os.environ.get("CODEX_DISPATCH_TMP")
+        os.environ["CODEX_DISPATCH_TMP"] = str(self.root / "runtime")
+        DISPATCH.runtime_temp_dir().mkdir()
         self.codex_home = self.root / "codex-home"
         self.agents = self.codex_home / "agents"
         self.agents.mkdir(parents=True)
@@ -32,20 +35,40 @@ class DispatchTests(unittest.TestCase):
             'confirm_profiles = ["implement_deep"]\n',
             encoding="utf-8",
         )
-        self.write_profile("investigate", "gpt-5.6-terra", "medium", "read-only")
-        self.write_profile("implement_deep", "gpt-5.6-sol", "high", "workspace-write")
+        self.write_profile(
+            "investigate", "gpt-5.6-sol", "medium", "default", False, "read-only"
+        )
+        self.write_profile(
+            "implement_deep", "gpt-5.6-sol", "high", "default", False, "workspace-write"
+        )
+        self.write_profile("lookup", "gpt-5.6-sol", "low", "fast", True, "read-only")
 
     def tearDown(self) -> None:
+        if self.previous_dispatch_tmp is None:
+            os.environ.pop("CODEX_DISPATCH_TMP", None)
+        else:
+            os.environ["CODEX_DISPATCH_TMP"] = self.previous_dispatch_tmp
         self.tempdir.cleanup()
 
-    def write_profile(self, name: str, model: str, effort: str, sandbox: str) -> None:
+    def write_profile(
+        self,
+        name: str,
+        model: str,
+        effort: str,
+        service_tier: str,
+        fast_mode: bool,
+        sandbox: str,
+    ) -> None:
         (self.agents / f"{name}.toml").write_text(
             f'name = "{name}"\n'
             f'description = "{name} profile"\n'
             f'model = "{model}"\n'
             f'model_reasoning_effort = "{effort}"\n'
+            f'service_tier = "{service_tier}"\n'
             f'sandbox_mode = "{sandbox}"\n'
-            'developer_instructions = "Stay bounded."\n',
+            'developer_instructions = "Stay bounded."\n'
+            "[features]\n"
+            f"fast_mode = {str(fast_mode).lower()}\n",
             encoding="utf-8",
         )
 
@@ -79,26 +102,80 @@ class DispatchTests(unittest.TestCase):
         self.assertEqual(normal.returncode, 0)
         self.assertFalse(json.loads(normal.stdout)["requires_confirmation"])
         self.assertTrue(json.loads(deep.stdout)["requires_confirmation"])
-        self.assertEqual(json.loads(normal.stdout)["model"], "gpt-5.6-terra")
+        self.assertEqual(json.loads(normal.stdout)["model"], "gpt-5.6-sol")
+        self.assertEqual(json.loads(normal.stdout)["service_tier"], "default")
+        self.assertFalse(json.loads(normal.stdout)["fast_mode"])
 
     def test_repository_profile_matrix(self) -> None:
         expected = {
-            "lookup": ("gpt-5.6-luna", "low", "read-only"),
-            "investigate": ("gpt-5.6-terra", "medium", "read-only"),
-            "implement": ("gpt-5.6-sol", "medium", "workspace-write"),
-            "implement_fast": ("gpt-5.6-terra", "high", "workspace-write"),
-            "implement_deep": ("gpt-5.6-sol", "high", "workspace-write"),
-            "review": ("gpt-5.6-sol", "medium", "read-only"),
-            "review_fast": ("gpt-5.6-luna", "high", "read-only"),
+            "lookup": ("gpt-5.6-sol", "low", "fast", True, "read-only"),
+            "investigate": ("gpt-5.6-sol", "medium", "default", False, "read-only"),
+            "implement": ("gpt-5.6-sol", "medium", "default", False, "workspace-write"),
+            "implement_fast": ("gpt-5.6-sol", "high", "default", False, "workspace-write"),
+            "implement_deep": ("gpt-5.6-sol", "high", "default", False, "workspace-write"),
+            "review": ("gpt-5.6-sol", "medium", "default", False, "read-only"),
+            "review_fast": ("gpt-5.6-sol", "high", "default", False, "read-only"),
         }
         policy = DISPATCH.load_policy(REPO_CODEX_HOME)
         self.assertEqual(policy["mode"], "automatic")
         for name, runtime in expected.items():
             profile = DISPATCH.load_profile(REPO_CODEX_HOME, name)
             self.assertEqual(
-                (profile["model"], profile["model_reasoning_effort"], profile["sandbox_mode"]),
+                (
+                    profile["model"],
+                    profile["model_reasoning_effort"],
+                    profile["service_tier"],
+                    profile["features"]["fast_mode"],
+                    profile["sandbox_mode"],
+                ),
                 runtime,
             )
+
+    def test_rejects_speed_that_does_not_match_effort(self) -> None:
+        self.write_profile("invalid", "gpt-5.6-sol", "low", "default", False, "read-only")
+        with self.assertRaisesRegex(DISPATCH.DispatchError, "profile speed"):
+            DISPATCH.load_profile(self.codex_home, "invalid")
+
+    def test_rejects_invalid_service_tier_and_fast_mode_type(self) -> None:
+        self.write_profile("invalid_tier", "gpt-5.6-sol", "low", "priority", True, "read-only")
+        with self.assertRaisesRegex(DISPATCH.DispatchError, "unsupported service tier"):
+            DISPATCH.load_profile(self.codex_home, "invalid_tier")
+
+        self.write_profile("invalid_feature", "gpt-5.6-sol", "high", "default", False, "read-only")
+        path = self.agents / "invalid_feature.toml"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("fast_mode = false", 'fast_mode = "false"'),
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(DISPATCH.DispatchError, "must be a boolean"):
+            DISPATCH.load_profile(self.codex_home, "invalid_feature")
+
+    def test_build_command_for_fast_profile_is_exact(self) -> None:
+        profile = DISPATCH.load_profile(self.codex_home, "lookup")
+        report = self.root / "report.md"
+        self.assertEqual(
+            DISPATCH.build_command("codex", self.root, profile, report),
+            [
+                "codex",
+                "exec",
+                "-C",
+                str(self.root),
+                "-m",
+                "gpt-5.6-sol",
+                "-c",
+                'model_reasoning_effort="low"',
+                "-c",
+                'service_tier="fast"',
+                "-c",
+                "features.fast_mode=true",
+                "-s",
+                "read-only",
+                "--json",
+                "-o",
+                str(report),
+                "-",
+            ],
+        )
 
     def test_rejects_unknown_and_unsafe_profile_names(self) -> None:
         for name in ("missing", "../investigate"):
@@ -200,12 +277,31 @@ class DispatchTests(unittest.TestCase):
             check=False,
         )
         summary = json.loads(result.stdout)
-        arguments = (self.root / "args.txt").read_text(encoding="utf-8")
+        arguments = (self.root / "args.txt").read_text(encoding="utf-8").splitlines()
         composed_prompt = (self.root / "composed-prompt.txt").read_text(encoding="utf-8")
         self.assertEqual(result.returncode, 0)
-        self.assertIn("gpt-5.6-terra", arguments)
-        self.assertIn('model_reasoning_effort="medium"', arguments)
-        self.assertIn("read-only", arguments)
+        self.assertEqual(
+            arguments,
+            [
+                "exec",
+                "-C",
+                str(self.root.resolve()),
+                "-m",
+                "gpt-5.6-sol",
+                "-c",
+                'model_reasoning_effort="medium"',
+                "-c",
+                'service_tier="default"',
+                "-c",
+                "features.fast_mode=false",
+                "-s",
+                "read-only",
+                "--json",
+                "-o",
+                str((artifact / "report.md").resolve()),
+                "-",
+            ],
+        )
         self.assertIn("Do not spawn agents", composed_prompt)
         self.assertEqual(summary["session_id"], "thread-test")
         self.assertEqual(summary["report"], "delegated report")

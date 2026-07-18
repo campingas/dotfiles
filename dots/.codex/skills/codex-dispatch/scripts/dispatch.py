@@ -20,6 +20,7 @@ from typing import Any
 
 PROFILE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 VALID_EFFORTS = {"low", "medium", "high", "xhigh"}
+VALID_SERVICE_TIERS = {"default", "fast"}
 VALID_SANDBOXES = {"read-only", "workspace-write", "danger-full-access"}
 REQUIRED_PROFILE_KEYS = {
     "name",
@@ -27,7 +28,9 @@ REQUIRED_PROFILE_KEYS = {
     "developer_instructions",
     "model",
     "model_reasoning_effort",
+    "service_tier",
     "sandbox_mode",
+    "features",
 }
 
 
@@ -58,8 +61,18 @@ def load_profile(codex_home: Path, profile_name: str) -> dict[str, Any]:
         raise DispatchError(f"profile name mismatch in {profile_path}")
     if profile["model_reasoning_effort"] not in VALID_EFFORTS:
         raise DispatchError(f"unsupported effort in {profile_path}")
+    if profile["service_tier"] not in VALID_SERVICE_TIERS:
+        raise DispatchError(f"unsupported service tier in {profile_path}")
     if profile["sandbox_mode"] not in VALID_SANDBOXES:
         raise DispatchError(f"unsupported sandbox in {profile_path}")
+    features = profile["features"]
+    if not isinstance(features, dict) or not isinstance(features.get("fast_mode"), bool):
+        raise DispatchError(f"features.fast_mode must be a boolean in {profile_path}")
+    expected_speed = ("fast", True) if profile["model_reasoning_effort"] == "low" else ("default", False)
+    if (profile["service_tier"], features["fast_mode"]) != expected_speed:
+        raise DispatchError(
+            f"profile speed must be fast for low effort and default otherwise in {profile_path}"
+        )
     return profile
 
 
@@ -116,6 +129,10 @@ def build_command(
         profile["model"],
         "-c",
         f'model_reasoning_effort="{profile["model_reasoning_effort"]}"',
+        "-c",
+        f'service_tier="{profile["service_tier"]}"',
+        "-c",
+        f'features.fast_mode={str(profile["features"]["fast_mode"]).lower()}',
         "-s",
         profile["sandbox_mode"],
         "--json",
@@ -172,6 +189,8 @@ def main() -> int:
             "profile": profile["name"],
             "model": profile["model"],
             "effort": profile["model_reasoning_effort"],
+            "service_tier": profile["service_tier"],
+            "fast_mode": profile["features"]["fast_mode"],
             "sandbox": profile["sandbox_mode"],
             "requires_confirmation": confirmation_required(policy, args.profile),
             "backend": policy["backend"],

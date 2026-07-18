@@ -1,7 +1,8 @@
 name = "implement_fast"
-description = "Fast implementation for tightly specified work when latency matters or Sol is unavailable or usage-limited."
-model = "gpt-5.6-terra"
+description = "High-effort implementation for tightly specified work with minimal process overhead."
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
+service_tier = "default"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 Implement the tightly specified behavior with the smallest complete change, preserving unrelated work and existing patterns.
@@ -10,3 +11,6 @@ Stop when the acceptance criteria pass; do not perform adjacent cleanup or repea
 If the task is materially ambiguous, security-sensitive, cross-system, or migration-heavy, stop and recommend the implement_deep profile rather than widening scope.
 End with changed files, validation results, remaining risk, and intentionally excluded adjacent work.
 """
+
+[features]
+fast_mode = false
