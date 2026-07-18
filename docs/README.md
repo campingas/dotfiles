@@ -10,6 +10,8 @@ Read `docs/bash.md` before changing Bash startup behavior.
 
 Read `docs/agent-config.md` before changing Claude, Codex, or skill sync behavior.
 
+Read `docs/gpt-5.6-agent-selection.md` for the evidence, quality-per-token analysis, and validation protocol behind the managed Codex agent matrix.
+
 Read `docs/ubuntu.md` when preparing a Linux host for these dotfiles.
 
 Read `docs/node.md` when setting up Node, Bun, pnpm, or mise.

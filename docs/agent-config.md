@@ -66,6 +66,8 @@ Until named roles pass the strict validation gate, the root uses the `codex-disp
 
 Sol xhigh is a one-off override only after a failed Sol-high attempt or for a genuinely long-horizon frontier task, with the reason recorded. Max effort is not allowed.
 
+See `docs/gpt-5.6-agent-selection.md` for the dated benchmark evidence, quality-per-token reasoning, limitations, and local validation protocol behind this all-Sol matrix.
+
 Every delegated task defines an objective, acceptance criteria, behavior boundary, exclusions, required validation, completion condition, and stop conditions. Agents stop after acceptance criteria and risk-proportional validation pass, without optional cleanup, abstraction, polishing, tuning, adjacent fixes, or repeated failure loops.
 
 The fallback policy is automatic for one bounded run. The launcher enforces confirmation for `implement_deep` and prevents concurrent delegated processes. Global guidance requires confirmation before multiple sequential runs or an xhigh override. A user may override the default with `no delegation`, `propose only`, or an explicit profile.

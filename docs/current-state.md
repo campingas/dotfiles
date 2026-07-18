@@ -36,7 +36,7 @@ Repo-local `AGENTS.md` files should avoid duplicating global defaults.
 
 `docs/agent-config.md` owns Claude, Codex, and skill sync behavior.
 
-Claude uses Fable medium by default and raises it to high only for explicit quality-risk triggers. Every managed Codex profile uses GPT-5.6 Sol: low effort uses Fast speed, while medium and high effort use Standard speed.
+Claude uses Fable medium by default and raises it to high only for explicit quality-risk triggers. Every managed Codex profile uses GPT-5.6 Sol: low effort uses Fast speed, while medium and high effort use Standard speed. The evidence and refresh protocol for this decision live in `docs/gpt-5.6-agent-selection.md`.
 
 Codex keeps integration in the root session, uses at most one active delegated run when isolation helps, and controls GPT-5.6 overreach through explicit task envelopes and outcome-based stop conditions.
 
