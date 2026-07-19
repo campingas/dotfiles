@@ -14,15 +14,15 @@ Keep fleet updates confirmation-gated. Agents may prepare a deployment plan, but
 
 Run `scripts/agents-syncs.sh` after changing managed Claude or Codex instructions, skills, dispatch policy, or Codex subagent profiles.
 
-Complete the two automatic-dispatch validation gates below after a Codex release claims or appears to support named custom agents under `codex exec`.
+Run Stage A against the installed Codex CLI 0.144.6 when an approved bounded read-only control is available, then run later stages only in the documented order.
 
 Validate the exec-backed `codex-dispatch` path after changing its policy, script, skill instructions, or profile files.
 
 Design a fleet-sync helper only after the local dotfile and agent-config sync workflow has settled.
 
-## Automatic Dispatch Validation
+## Native Dispatch Validation
 
-Run these gates in order. Use a clean disposable branch or worktree, preserve unrelated changes, and save the Claude transcript, Codex report, exec log, and relevant Codex rollout JSONL files as evidence.
+Run Stage A, the native-first policy transition, Stage B, and Gate 2 in that order. Use a clean disposable branch or worktree, preserve unrelated changes, and save the Claude transcript, Codex report, exec log, configuration evidence, and relevant Codex rollout JSONL files as evidence.
 
 ### Test Task
 
@@ -34,46 +34,52 @@ Use a neutral prompt such as:
 Implement the approved plan at <path> end to end. Preserve unrelated changes, follow repository instructions, run the required validation, and stop when the acceptance criteria pass. Report changed files, validation, remaining risk, and intentionally excluded adjacent work.
 ```
 
-Do not mention Codex, agents, subagents, profile names, models, delegation, fan-out, or parallelism in the prompt. Reusing a task prompt that contains those terms invalidates the test.
+For Stage B and Gate 2, do not mention Codex, agents, subagents, profile names, models, delegation, fan-out, or parallelism in the task prompt. Reusing a task prompt that contains those terms invalidates those automatic-selection tests. Stage A is the documented explicit plumbing-control exception.
 
-### Gate 1: Codex Native Selection
+### Stage A: Native Role Plumbing Control
 
 1. Confirm `scripts/agents-syncs.sh` has installed the seven current TOML files under `~/.codex/agents/`, and record the Codex CLI version.
+2. Use the single validation-only exception in `dots/.codex/AGENTS.md`: start a fresh Sol-medium Standard-speed root in read-only mode, explicitly prohibit `codex-dispatch` and nested `codex exec`, and require exactly one native `lookup` custom agent for a bounded mechanical read-only task. The different low-effort child setting makes profile application observable against the medium-effort root.
+3. Find the new root and child rollout files under `~/.codex/sessions/`, then inspect every `session_meta` and `turn_context` record.
+4. Confirm the child `session_meta.payload.source.subagent.thread_spawn.agent_role` equals `lookup` and the child's persisted model, low effort, and read-only sandbox match `lookup.toml`. Record `session_meta.payload.agent_path` only for thread traceability; a path or UI label is not role evidence.
+5. Record speed separately from persisted runtime evidence: use the profile TOML plus the root command or launcher configuration to prove `service_tier` and `features.fast_mode`, because current rollout records do not persist `service_tier` as speed evidence.
+6. Confirm the root waited for the child and integrated its evidence without writing to the test worktree.
+
+Stage A passes only when the explicitly requested `lookup` role and its configured model, low effort, and read-only sandbox are present in persisted evidence, with speed supported separately by configuration and launcher evidence. An untyped child or inherited medium-effort root runtime fails the control. This explicit request tests plumbing only and cannot prove automatic selection.
+
+Keep production routing exec-backed until Stage A passes. After it passes, make a separate reviewed policy change from exec-backed-first to native-first with exec-backed fallback; do not use this validation-only exception as the production policy transition itself.
+
+### Stage B: Codex Automatic Selection
+
+1. Run Stage B only after Stage A passes and the separate native-first policy transition is active, using a fresh session on a clean disposable branch or worktree.
 2. Start a fresh Sol-medium Standard-speed root with `codex exec -m gpt-5.6-sol -c 'model_reasoning_effort="medium"' -c 'service_tier="default"' -c 'features.fast_mode=false'` and the neutral test prompt.
 3. Let the root plan and execute without steering it toward delegation. Do not send follow-up instructions about agents while it runs.
-4. Find the new root and child rollout files under `~/.codex/sessions/`, then inspect every `session_meta` and `turn_context` record.
-5. Confirm the root `turn_context` is `gpt-5.6-sol` at `medium` with Standard speed, at least one child `session_meta.payload.source.subagent.thread_spawn.agent_role` equals a managed profile name, and the child's `turn_context` matches that profile's TOML model, effort, speed, and sandbox.
-6. Confirm the root waited for the child, integrated its evidence, respected the one-writer rule, and completed the requested validation.
+4. Find the new root and child rollout files, then apply the same persisted role, model, effort, and sandbox checks plus the separate configuration and launcher speed checks used in Stage A. Record `agent_path` only for traceability.
+5. Confirm the root chose a managed role without explicit steering, waited for the child, integrated its evidence, respected the one-writer rule, and completed the requested validation.
 
-Gate 1 strictly passes only when the named role and configured child runtime are both present in JSONL. A task with no child or explicit user steering toward delegation is a strict failure. An untyped child with `agent_role = null` that matches the root model, effort, speed, and sandbox is recorded separately as an inherited-runtime compatibility pass.
+Stage B strictly passes only when automatic named-role selection and the configured child runtime are both proven. A task with no child, explicit user steering toward delegation, an untyped child, or inherited root runtime is a strict failure.
 
 ### Gate 2: Claude to Codex Selection
 
-1. Run Gate 2 only after Gate 1 passes, using a fresh Claude Code session on a clean disposable branch or worktree.
+1. Run Gate 2 only after Stage B passes, using a fresh Claude Code session on a clean disposable branch or worktree.
 2. Confirm the Claude main thread is Fable 5 at medium effort and give it a neutral task of the same qualifying shape without mentioning Codex or delegation.
 3. Allow Claude to choose its workflow without steering. Capture the transcript and verify that Claude autonomously invokes the Codex implementation or review workflow and launches `codex exec`.
-4. Inspect the resulting Codex root and child rollout JSONL files using the same evidence checks as Gate 1.
-5. Confirm at least one Codex child records a managed non-null `agent_role`, its model, effort, speed, and sandbox match the corresponding TOML profile, and Claude reviews and integrates the Codex result before reporting completion.
+4. Inspect the resulting Codex root and child rollout JSONL files using the same persisted-evidence and separate speed-evidence checks as Stage B.
+5. Confirm at least one Codex child records a managed non-null `agent_role`, its persisted model, effort, and sandbox match the corresponding TOML profile, its configured speed matches the TOML and launcher evidence, and Claude reviews and integrates the Codex result before reporting completion. Record `agent_path` only for traceability.
 
-Gate 2 strictly passes only when Claude autonomously dispatches Codex and the resulting Codex run proves named-profile execution. A Claude-only subagent, a plain Codex root with no child, or a prompt that requested Codex or delegation is a strict failure. If Claude autonomously launches Codex and its untyped child inherits the Codex root model, effort, speed, and sandbox, record a compatibility pass without closing the strict gate.
-
-### Inherited Runtime Control
-
-Run this control separately after the neutral automatic tests. The control explicitly requests one child, so it tests runtime inheritance rather than autonomous dispatch and cannot close Gate 1 or Gate 2.
-
-1. Start a fresh Sol-medium Standard-speed Codex root in read-only mode and explicitly require exactly one child, then verify that a child with `agent_role = null` records the same model, effort, speed, and sandbox in `turn_context`.
-2. Start Fable-medium Claude and explicitly require it to launch the same Sol-medium Codex control, then verify the new Codex root and child rollout files independently rather than relying on Claude's summary.
-3. Record a compatibility pass only when the child model, effort, speed, and sandbox exactly match the Codex root. A missing child, missing metadata, or a different runtime fails the control.
+Gate 2 strictly passes only when Claude autonomously dispatches Codex and the resulting Codex run proves named-profile execution. A Claude-only subagent, a plain Codex root with no child, a prompt that requested Codex or delegation, an untyped child, or inherited root runtime is a strict failure.
 
 ### Evidence Command
 
 Use the following shape for each candidate rollout file:
 
 ```bash
-jq -c 'select(.type == "session_meta" or .type == "turn_context") | {type, source: .payload.source, model: .payload.model, effort: .payload.effort, service_tier: .payload.service_tier, sandbox_policy: .payload.sandbox_policy}' <rollout.jsonl>
+jq -c 'select(.type == "session_meta" or .type == "turn_context") | {type, originator: .payload.originator, source: .payload.source, agent_role: (try .payload.source.subagent.thread_spawn.agent_role catch null), agent_path: (.payload.agent_path // (try .payload.source.subagent.thread_spawn.agent_path catch null)), model: .payload.model, effort: .payload.effort, sandbox_policy: .payload.sandbox_policy, multi_agent_version: .payload.multi_agent_version}' <rollout.jsonl>
 ```
 
-Record the task prompt, CLI versions, root session id, child session ids, selected role names, effective models, efforts, speeds, sandboxes, validation results, and final pass or failure reason in this section after each test.
+Persisted rollout evidence covers originator/source, role, model, effort, sandbox, and multi-agent version. Record agent path only for traceability, and record speed from the profile TOML and root command or launcher configuration instead of claiming that `service_tier` is persisted.
+
+Record the task prompt, CLI versions, root session id, child session ids, selected role names, effective models, efforts, configured speeds, sandboxes, validation results, and final pass or failure reason in this section after each test.
 
 ### Timed Log
 

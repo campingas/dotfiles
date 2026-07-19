@@ -8,6 +8,8 @@ This repo tracks the user's global coding-agent configuration under `dots/`.
 
 `dots/.claude/skills/` contains repo-authored Claude skills.
 
+`dots/.claude/hooks/` contains repo-authored Claude lifecycle hooks.
+
 `dots/.codex/AGENTS.md` is the source for `~/.codex/AGENTS.md`.
 
 `dots/.codex/skills/` contains repo-authored Codex skills.
@@ -28,6 +30,8 @@ The script copies global adapter files into `~/.claude/` and `~/.codex/`.
 
 The script copies `dots/.codex/dispatch.toml` into `~/.codex/dispatch.toml` without modifying the app-managed `~/.codex/config.toml`.
 
+The script links the HTML-planning hook into `~/.claude/hooks/` and idempotently merges its `ExitPlanMode` registration into the app-managed `~/.claude/settings.json` without replacing unrelated settings or hooks.
+
 The script symlinks each directory under `dots/.claude/skills/` into `~/.claude/skills/`.
 
 The script symlinks each directory under `dots/.codex/skills/` into `~/.codex/skills/`.
@@ -42,6 +46,8 @@ Skills that already exist in live skill directories but do not point into this r
 
 Agent profiles that already exist in the live agent directory but do not point into this repo are left untouched.
 
+The Claude HTML-planning hook verifies only that the current session rendered an `html-planning-*.html` artifact recently. The skill remains responsible for verifying and reporting the separate Plan-Saver archive result.
+
 ## Subagent Dispatch
 
 Claude uses fable-5 at medium effort by default and raises it to high only for security, consequential architecture, migrations, releases, cross-system debugging, or an incomplete medium result. Opus 4.8 high is the availability fallback.
@@ -52,7 +58,9 @@ Codex delegates selectively when a bounded independent task benefits from contex
 
 The root Codex session remains the orchestrator. When the installed runtime exposes named roles, it must select a matching custom profile instead of creating an untyped child.
 
-Until named roles pass the strict validation gate, the root uses the `codex-dispatch` skill. The skill launches a separate `codex exec` process with the selected profile's model, reasoning effort, speed, sandbox, and prompt-layer workflow instructions, then returns the report and session evidence to the root.
+Until native role plumbing passes Stage A and a separate reviewed native-first policy transition is made, the root uses the `codex-dispatch` skill. The skill launches a separate `codex exec` process with the selected profile's model, reasoning effort, speed, sandbox, and prompt-layer workflow instructions, then returns the report and session evidence to the root.
+
+Exactly one validation-only exception may bypass `codex-dispatch`: an explicitly requested native custom-agent control for one managed role. It is plumbing evidence only, cannot count as automatic selection, and does not change production routing by itself.
 
 | profile | model | effort | speed | use |
 |---------|-------|--------|-------|-----|
@@ -72,7 +80,7 @@ Every delegated task defines an objective, acceptance criteria, behavior boundar
 
 The fallback policy is automatic for one bounded run. The launcher enforces confirmation for `implement_deep` and prevents concurrent delegated processes. Global guidance requires confirmation before multiple sequential runs or an xhigh override. A user may override the default with `no delegation`, `propose only`, or an explicit profile.
 
-The last strict native-role probe, on Codex CLI 0.144.4, still recorded `agent_role = null` and inherited the root runtime. Keep using the exec-backed dispatcher until a new probe proves a non-null role together with the configured model, effort, speed, and sandbox.
+The last behavioral native-role probe, on Codex CLI 0.144.4, still recorded `agent_role = null` and inherited the root runtime. The installed 0.144.6 feature audit supports running the Stage A control, but keep using the exec-backed dispatcher until Stage A proves a non-null managed role plus the configured model, effort, and sandbox and a separate reviewed native-first policy transition is made. Record `agent_path` only as thread traceability, not role evidence. Treat speed as profile and launcher configuration evidence because rollout JSONL does not persist `service_tier`.
 
 ## Public Repo Safety
 

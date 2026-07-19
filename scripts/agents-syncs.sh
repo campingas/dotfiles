@@ -49,6 +49,74 @@ link_agent() {
   printf 'linked %s -> %s\n' "$dst" "$src"
 }
 
+link_hook() {
+  local src="$1"
+  local dst="$2"
+
+  if [[ -e "$dst" && ! -L "$dst" ]]; then
+    printf 'skip existing non-symlink hook: %s\n' "$dst" >&2
+    return 1
+  fi
+  mkdir -p "$(dirname "$dst")"
+  ln -sfn "$src" "$dst"
+  printf 'linked %s -> %s\n' "$dst" "$src"
+}
+
+ensure_claude_html_planning_hook() {
+  local settings="$HOME/.claude/settings.json"
+  local settings_dir="$HOME/.claude"
+  local hook_command='bash ~/.claude/hooks/require-html-planning.sh'
+  local tmp
+
+  command -v jq >/dev/null 2>&1 || {
+    printf 'jq is required to merge Claude hook settings\n' >&2
+    return 1
+  }
+  mkdir -p "$settings_dir"
+
+  if [[ -f "$settings" ]] && jq -e --arg command "$hook_command" '
+    any(.hooks.PreToolUse[]?;
+      .matcher == "ExitPlanMode" and
+      any(.hooks[]?; .type == "command" and .command == $command))
+  ' "$settings" >/dev/null; then
+    printf 'unchanged %s\n' "$settings"
+    return
+  fi
+
+  tmp=$(mktemp "$settings_dir/.settings.XXXXXX")
+  if [[ -f "$settings" ]]; then
+    if ! jq --arg command "$hook_command" '
+      .hooks //= {} |
+      .hooks.PreToolUse //= [] |
+      if any(.hooks.PreToolUse[]?; .matcher == "ExitPlanMode") then
+        .hooks.PreToolUse |= map(
+          if .matcher == "ExitPlanMode" then
+            .hooks += [{"type":"command", "command":$command}]
+          else . end
+        )
+      else
+        .hooks.PreToolUse += [{
+          "matcher":"ExitPlanMode",
+          "hooks":[{"type":"command", "command":$command}]
+        }]
+      end
+    ' "$settings" > "$tmp"; then
+      rm -f "$tmp"
+      return 1
+    fi
+  else
+    jq -n --arg command "$hook_command" '{
+      hooks:{PreToolUse:[{
+        matcher:"ExitPlanMode",
+        hooks:[{type:"command", command:$command}]
+      }]}
+    }' > "$tmp"
+  fi
+  chmod 600 "$tmp"
+  mv -f "$tmp" "$settings"
+  printf 'updated %s\n' "$settings"
+}
+
 prune_repo_skill_links() {
   local skills_src="$1"
   local skills_dst="$2"
@@ -123,6 +191,8 @@ main() {
   copy_file "$repo_root/dots/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
   copy_file "$repo_root/dots/.codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
   copy_file "$repo_root/dots/.codex/dispatch.toml" "$HOME/.codex/dispatch.toml"
+  link_hook "$repo_root/dots/.claude/hooks/require-html-planning.sh" "$HOME/.claude/hooks/require-html-planning.sh"
+  ensure_claude_html_planning_hook
 
   sync_skill_tree "$repo_root/dots/.claude/skills" "$HOME/.claude/skills"
   sync_skill_tree "$repo_root/dots/.codex/skills" "$HOME/.codex/skills"
