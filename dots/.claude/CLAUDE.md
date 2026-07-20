@@ -56,7 +56,7 @@ Protect both Claude and Codex subscription limits. Prefer the lowest configurati
 | lane | default | fallback |
 |------|---------|----------|
 | Claude (main thread, integration, final decisions) | fable-5 at medium effort | fable-5 at high effort, then opus-4.8 high if Fable is unavailable |
-| Codex bounded work | Sol medium, selected through the intended agent profile | Terra high when latency matters or Sol is unavailable or usage-limited |
+| Codex bounded work | Sol at the selected profile's pinned effort and speed (low/Fast, medium/Standard, high/Standard) | Sol xhigh as a one-off override after a failed Sol-high run, with the reason recorded |
 
 Claude model policy:
 - Use fable-5 at medium effort by default for requirements, planning, integration, final decisions, and small tightly coupled edits.
@@ -71,19 +71,22 @@ Automatic dispatch (mirror of the Codex dispatch rules):
 - Do not delegate trivial work, tightly coupled changes, or tasks without a concrete independent objective.
 - Use no child for simple work and one child by default when isolation helps. Use two only for clearly independent objectives and three only for an explicit rush trigger; never run more than one writer.
 - Give each child an objective, acceptance criteria, behavior boundary, exclusions, required validation, completion condition, and stop conditions; keep integration and final decisions in the main thread.
-- Use the Codex profile vocabulary from `~/.codex/AGENTS.md`: `lookup`, `investigate`, `implement`, `implement_fast`, `implement_deep`, `review`, and `review_fast`.
+- Use the defined Codex profiles, all GPT-5.6 Sol varying only effort and speed: `lookup`, `investigate`, `implement`, `implement_fast`, `implement_deep`, `review`, and `review_fast`. They live in `dots/.codex/agents/*.toml` (synced to `~/.codex/agents/`) and are documented in `docs/agent-config.md`.
 - Add a separate review only for security, migrations, releases, cross-system behavior, weak validation, or an implementation that required escalation.
 - Require delegated work to stop after acceptance criteria and risk-proportional validation pass, without adjacent cleanup, abstraction, polishing, tuning, or repeated failure loops.
 
 Codex mechanics:
-- Codex is reached through the Codex CLI: `codex exec` / `codex review` (my `~/.codex/config.toml` defaults to gpt-5.6-sol at high effort).
-- Use the codex-implementation, codex-review, and codex-computer-use skills; for work they don't cover (investigation, data analysis), run `codex exec -s read-only` directly with a self-contained prompt.
-- Codex CLI 0.144.1 does not yet prove named-role selection under `codex exec`; do not claim a profile-specific model ran unless session metadata confirms it.
-- Codex runs can exceed Bash's 10-minute timeout: pass an explicit timeout, or run in the background and poll for the report file.
+- Codex is GPT-5.6 Sol only. Never route Codex work to Terra or any other model. Vary effort and speed by choosing the profile, not the model. `~/.codex/config.toml` defaults to gpt-5.6-sol high for bare `codex exec`; the launcher below overrides effort and speed per profile.
+- To spawn a defined Codex subagent, use the `codex-dispatch` launcher, which pins the profile's Sol model, effort, speed, sandbox, and instructions:
+  `uv run --no-cache --no-project "$HOME/.codex/skills/codex-dispatch/scripts/dispatch.py" --profile <name> --cwd "$PWD" --prompt-file <file>`
+  Add `--dry-run` to preview the resolved model, effort, speed, and sandbox without launching. `implement_deep`, more than one delegated run, or an xhigh override need confirmation first, and `implement_deep` also requires `--confirmed`.
+- For higher-level entry points use the codex-implementation, codex-review, and codex-computer-use skills; they wrap the same Sol-only Codex CLI.
+- Codex runs can exceed Bash's 10-minute timeout: run in the background and poll for the report file, or raise the timeout.
 - Parallel Codex implementation agents must use `isolation: 'worktree'` so codex edits don't collide in the shared checkout.
+- Native named-role selection under `codex exec` is still unproven on the installed CLI (0.144.6, `agent_role = null`). Keep using the exec-backed launcher and do not claim a native role ran unless session metadata proves a non-null `agent_role` plus the expected runtime.
 
-Codex inside workflows and subagents (the model parameter only takes Claude models, so use a wrapper):
-- Spawn a thin Claude wrapper agent with `model: 'sonnet', effort: 'low'` whose prompt instructs it to write a self-contained codex prompt, run `codex exec` via Bash, and return the report (use `schema` on the wrapper to get structured output back). This is the one allowed use of sonnet: the wrapper is a dumb shell and the real worker is Codex.
+Codex inside workflows and subagents (the Agent `model` parameter only takes Claude models, so use a wrapper):
+- Spawn a thin Claude wrapper agent with `model: 'sonnet', effort: 'low'` whose prompt tells it to write a self-contained task envelope, run the `codex-dispatch` launcher with the chosen profile via Bash, and return the launcher's JSON report (use `schema` on the wrapper for structured output). This is the one allowed use of sonnet: the wrapper is a dumb shell and the real worker is Sol.
 - Always label these agents with a `codex:` prefix, e.g. `{label: 'codex:review-auth'}`. The workflow UI shows the wrapper's Claude model, so the label is the only indication the real worker is Codex.
 - Workflow token budgets only count Claude tokens; codex work is free and invisible to `budget.spent()`.
 
