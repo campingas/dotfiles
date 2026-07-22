@@ -10,7 +10,7 @@ Run `agents-syncs.sh` only for `.claude` and `.codex` configuration:
 scripts/agents-syncs.sh
 ```
 
-It copies the managed global instruction and dispatch files, then links repo-authored skills and Codex agent profiles. It does not deploy shell, editor, tmux, or application configuration.
+It copies the managed global instruction files, removes the retired repo-managed dispatch file when its contents are unchanged, then links repo-authored skills and Codex agent profiles. It does not deploy shell, editor, tmux, or application configuration.
 
 ## User dotfiles
 
@@ -37,3 +37,19 @@ scripts/dots-syncs.sh --apply
 ```
 
 `dots-syncs.sh` does not manage `.claude`, `.codex`, or remote fleet deployment.
+
+## Fleet copy
+
+Run `fleet-sync.sh` with explicit hosts and files to preview remote copies:
+
+```sh
+scripts/fleet-sync.sh --host example-host --file .zshrc --file tmux.conf
+```
+
+The helper accepts files relative to `dots/`, maps `tmux.conf` to `~/.tmux.conf`, prints every host, source, destination, and command, and performs no network operation by default. After reviewing the full preview, pass `--apply` to execute only those displayed SSH and SCP commands.
+
+Run the isolated sync regression checks with:
+
+```sh
+scripts/tests/sync-scripts.sh
+```

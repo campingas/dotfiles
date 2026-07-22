@@ -129,7 +129,7 @@ prune_repo_skill_links() {
     case "$target" in
       "$skills_src"/*)
         name="${link##*/}"
-        if [[ ! -d "$skills_src/$name" ]]; then
+        if [[ ! -f "$skills_src/$name/SKILL.md" ]]; then
           rm "$link"
           printf 'pruned stale skill link: %s\n' "$link"
         fi
@@ -146,7 +146,7 @@ sync_skill_tree() {
   [[ -d "$skills_src" ]] || return
   mkdir -p "$skills_dst"
   for skill in "$skills_src"/*; do
-    [[ -d "$skill" ]] || continue
+    [[ -f "$skill/SKILL.md" ]] || continue
     link_skill "$skill" "$skills_dst/${skill##*/}"
   done
   prune_repo_skill_links "$skills_src" "$skills_dst"
@@ -187,10 +187,29 @@ sync_agent_tree() {
   prune_repo_agent_links "$agents_src" "$agents_dst"
 }
 
+prune_legacy_dispatch_file() {
+  local path="$HOME/.codex/dispatch.toml"
+  local expected
+
+  [[ -e "$path" || -L "$path" ]] || return 0
+  if [[ -L "$path" || ! -f "$path" ]]; then
+    printf 'leave non-regular legacy dispatch path: %s\n' "$path" >&2
+    return
+  fi
+
+  expected=$'mode = "automatic"\nbackend = "exec"\nmax_parallel = 1\ncapture_evidence = true\nconfirm_profiles = ["implement_deep"]'
+  if [[ "$(<"$path")" == "$expected" ]]; then
+    rm -- "$path"
+    printf 'removed retired repo-managed file: %s\n' "$path"
+  else
+    printf 'leave modified legacy dispatch file: %s\n' "$path" >&2
+  fi
+}
+
 main() {
   copy_file "$repo_root/dots/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
   copy_file "$repo_root/dots/.codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
-  copy_file "$repo_root/dots/.codex/dispatch.toml" "$HOME/.codex/dispatch.toml"
+  prune_legacy_dispatch_file
   link_hook "$repo_root/dots/.claude/hooks/require-html-planning.sh" "$HOME/.claude/hooks/require-html-planning.sh"
   ensure_claude_html_planning_hook
 

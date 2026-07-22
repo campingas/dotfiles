@@ -1,30 +1,28 @@
 # GPT-5.6 Agent Selection
 
-Evidence snapshot: 2026-07-18.
+Evidence snapshot: 2026-07-22.
 
-This document explains why the managed profiles under `dots/.codex/agents/` use GPT-5.6 Sol with low, medium, or high reasoning instead of distributing routine work across Sol, Terra, and Luna.
+This document defines the managed Codex multi-agent V2 fleet under `dots/.codex/agents/` and the evidence required to change it.
 
 ## Decision
 
-Use Sol at the lowest reasoning effort that reliably clears the task's quality floor.
+Use native named-role spawning with five narrow profiles.
 
-The current profile matrix follows that rule: low for exact lookup, medium for normal investigation, implementation, and review, and high for difficult or tightly bounded work that needs deeper checking. Only low uses Fast speed; medium and high use Standard speed. Sol xhigh requires a recorded one-off justification, and max is excluded.
+Use GPT-5.6 Sol for every managed role. This is a deliberate quality-per-accepted-result policy: first clear the task's quality floor, then minimize reasoning effort and output tokens among configurations that pass. Use Fast only for low-effort lookup, keep every other role on Standard speed, and keep integration and final decisions in the root session.
 
-This is a quality-constrained token decision, not a claim that Sol is cheapest or has the highest raw throughput. Terra and Luna have lower API token prices and generate tokens faster, but the two public benchmark families below show Sol producing substantially stronger results per output-token budget once the task requires a good answer.
+`dots/.codex/AGENTS.md` owns orchestration policy, the TOML files in this directory are the declared role configuration truth, and app-managed global configuration owns multi-agent feature and capacity settings.
 
-## Current profiles
+## Profiles
 
-| Profile | Effort | Speed | Quality requirement |
-|---------|--------|-------|---------------------|
-| `lookup` | low | Fast | One exact, bounded fact with no material judgment |
-| `investigate` | medium | Standard | Evidence-backed multi-file tracing or research |
-| `implement` | medium | Standard | Complete bounded behavior with validation |
-| `implement_fast` | high | Standard | Tightly specified change with strong reasoning and little process overhead |
-| `implement_deep` | high | Standard | Cross-system, migration, security, or materially ambiguous work |
-| `review` | medium | Standard | Correctness and regression review of normal scope |
-| `review_fast` | high | Standard | Narrow review that still needs deep checking |
+| Profile | Model | Effort | Speed | Sandbox | Use |
+|---------|-------|--------|-------|---------|-----|
+| `lookup` | GPT-5.6 Sol | low | Fast | read-only | Exact mechanical facts with no material judgment |
+| `investigate` | GPT-5.6 Sol | medium | Standard | read-only | Multi-file tracing, research, and distilled evidence |
+| `implement` | GPT-5.6 Sol | medium | Standard | workspace-write | Normal bounded implementation |
+| `implement_deep` | GPT-5.6 Sol | high | Standard | workspace-write | Security, migrations, cross-system debugging, and material ambiguity |
+| `review` | GPT-5.6 Sol | high | Standard | read-only | Consequential correctness, regression, security, and test-gap review |
 
-The names `implement_fast` and `review_fast` describe a reduced-process task envelope, not the Fast service tier. Their high reasoning remains on Standard speed.
+Historical migration note: the V2 simplification removed two overlapping fast-named roles. They both used high reasoning at Standard speed, so their names implied a speed distinction that did not exist.
 
 ## What fast means
 
@@ -35,9 +33,15 @@ Keep four measurements separate:
 - **End-to-end latency** includes time to first answer token, reasoning time, tool calls, and generation time.
 - **Task success** measures whether the result actually satisfies the verifier or acceptance criteria.
 
-[OpenAI's Codex guidance](https://learn.chatgpt.com/docs/models#recommended-models) describes Sol as the choice for complex, open-ended, high-value work, Terra as the pragmatic all-rounder, and Luna as the option for clear, repeatable, high-volume tasks. It also recommends using the lowest reasoning effort that produces the required result.
+[OpenAI's Codex guidance](https://learn.chatgpt.com/docs/models#recommended-models) describes Sol as the choice for complex, open-ended, high-value work, Terra as the pragmatic all-rounder, and Luna as the option for clear, repeatable, high-volume tasks. That family-tier guidance is not wrong; it optimizes a broader price-and-volume boundary. This repo instead prioritizes quality per accepted result across a small managed fleet, while following the same recommendation to use the lowest reasoning effort that produces the required result.
 
 [Codex Fast mode](https://learn.chatgpt.com/docs/agent-configuration/speed) increases supported-model speed by about 1.5x and consumes GPT-5.6 ChatGPT credits at 2.5x the Standard rate. It does not mean low reasoning, fewer output tokens, or better task success. The current matrix uses it only for low-effort lookup, where latency is the priority and the task boundary prevents unnecessary work.
+
+- Use low effort only for objective work that is cheap to verify.
+- Use medium for normal investigation and implementation.
+- Use high when failure is expensive or the task requires complex logic, security analysis, edge-case reasoning, or consequential review.
+- Sol xhigh is a one-off override after a failed Sol-high attempt or for a genuinely long-horizon frontier task, with the reason recorded. Max effort is excluded.
+- Lookup alone uses Fast speed. Every other managed profile uses Standard speed. Keep Fast only while local measurements support its wall-time benefit for the latency-sensitive lookup role and its higher credit consumption remains acceptable.
 
 ## Artificial Analysis
 
@@ -47,21 +51,21 @@ The output-token figure is the total generated across the Intelligence Index. Ar
 
 | Model | Effort | Intelligence Index | Output tokens | Output tok/s | Evaluation cost |
 |-------|--------|-------------------:|--------------:|-------------:|----------------:|
-| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol-low) | low | 49 | 6.6M | 52.1 | $353.49 |
-| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra-low) | low | 40 | 5.9M | 122.3 | $160.65 |
-| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna-low) | low | 33 | 7.0M | 171.2 | $68.80 |
-| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol-medium) | medium | 54 | 12M | 54.7 | $593.04 |
-| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra-medium) | medium | 46 | 10M | 117.5 | $240.23 |
-| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna-medium) | medium | 38 | 12M | 168.4 | $105.84 |
-| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol-high) | high | 56 | 21M | 52.0 | $955.55 |
-| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra-high) | high | 49 | 24M | 117.8 | $495.77 |
-| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna-high) | high | 46 | 37M | 173.4 | $275.02 |
-| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol-xhigh) | xhigh | 58 | 35M | 54.5 | $1,542.52 |
-| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra-xhigh) | xhigh | 52 | 36M | 123.4 | $740.21 |
-| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna-xhigh) | xhigh | 49 | 67M | 169.2 | $479.37 |
-| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol) | max | 59 | 70M | 55.0 | $2,824.18 |
-| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra) | max | 55 | 96M | 135.8 | $1,753.94 |
-| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna) | max | 51 | 130M | 185.5 | $870.30 |
+| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol-low) | low | 49 | 6.6M | 55.9 | $353.49 |
+| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra-low) | low | 40 | 5.9M | 130.1 | $199.96 |
+| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna-low) | low | 33 | 7.0M | 179.8 | $68.80 |
+| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol-medium) | medium | 54 | 12M | 58.3 | $593.04 |
+| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra-medium) | medium | 46 | 10M | 122.8 | $285.91 |
+| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna-medium) | medium | 38 | 12M | 192.7 | $105.84 |
+| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol-high) | high | 56 | 21M | 58.7 | $955.55 |
+| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra-high) | high | 49 | 24M | 129.6 | $604.75 |
+| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna-high) | high | 46 | 37M | 192.8 | $275.02 |
+| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol-xhigh) | xhigh | 58 | 35M | 61.4 | $1,542.52 |
+| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra-xhigh) | xhigh | 52 | 36M | 125.1 | $909.61 |
+| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna-xhigh) | xhigh | 49 | 67M | 197.1 | $479.37 |
+| [Sol](https://artificialanalysis.ai/models/gpt-5-6-sol) | max | 59 | 70M | 63.5 | $2,824.18 |
+| [Terra](https://artificialanalysis.ai/models/gpt-5-6-terra) | max | 55 | 96M | 135.4 | $2,060.40 |
+| [Luna](https://artificialanalysis.ai/models/gpt-5-6-luna) | max | 51 | 130M | 183.3 | $870.30 |
 
 The same-effort comparison is decisive from high upward: Sol scores higher while using fewer output tokens than Terra and Luna. At medium, Sol uses 20% more output tokens than Terra but gains eight index points; it matches Luna's token total while gaining sixteen points. At low, Terra is 0.7M tokens shorter but loses nine points, while Sol is both stronger and shorter than Luna.
 
@@ -69,7 +73,7 @@ Artificial Analysis therefore supports Sol when response quality is constrained,
 
 ## DeepSWE
 
-[DeepSWE v1.1](https://deepswe.datacurve.ai/), updated 2026-07-17, measures 113 original long-horizon engineering tasks from 91 repositories across TypeScript, JavaScript, Python, Go, and Rust. The leaderboard reports Pass@1, average cost, average output tokens, and agent steps. Every model uses the same mini-swe-agent harness and shared Bash tool so the comparison holds scaffolding constant.
+[DeepSWE v1.1](https://deepswe.datacurve.ai/), source snapshot dated July 21, 2026, measures 113 original long-horizon engineering tasks from 91 repositories across TypeScript, JavaScript, Python, Go, and Rust. The leaderboard reports Pass@1, average cost, average output tokens, and agent steps. Every model uses the same mini-swe-agent harness and shared Bash tool so the comparison holds scaffolding constant.
 
 | Model | Effort | Pass@1 | Avg cost | Output tokens | Steps |
 |-------|--------|-------:|---------:|--------------:|------:|
@@ -127,7 +131,7 @@ This is the direct evidence for managed low, medium, and high profiles and for k
 
 Use Sol low when the answer is objective, narrowly scoped, and cheap to verify. Fast speed improves responsiveness without raising reasoning effort.
 
-Use Sol medium as the default quality/token balance for work requiring planning, multi-file context, implementation, or normal review. DeepSWE shows it exceeding Terra high and Luna xhigh while using fewer tokens.
+Use Sol medium as the default quality/token balance for work requiring planning, multi-file context, investigation, or normal implementation. DeepSWE shows it exceeding Terra high and Luna xhigh while using fewer tokens.
 
 Use Sol high when failure is expensive or the task needs complex logic, edge-case analysis, or consequential review. It nearly matches Terra max and exceeds Luna max with less than 40% of their output tokens on DeepSWE.
 
@@ -147,14 +151,53 @@ Public benchmarks cannot prove performance in this repository's exact Codex harn
 6. Among configurations clearing the quality floor, prefer the lowest median output-token use. Replace an incumbent only when the challenger causes no loss in accepted runs and reduces median output tokens by at least 20%.
 7. Keep Fast only when it materially reduces median wall time for the latency-sensitive profile and its higher credit consumption is acceptable; do not treat it as a token-saving feature.
 
-## Limitations
+## Concurrency
 
-[DeepSWE's methodology and limitations](https://deepswe.datacurve.ai/blog/deepswe) are important. The common mini-swe-agent harness isolates model capability but does not reproduce native Codex CLI tools or prompts. Its corpus covers popular open-source repositories, five languages, and mostly long-horizon feature work; long-tail repositories, proprietary code, C++, Java, bug localization, and refactoring are under-represented.
+The app-managed Codex configuration currently provides this global runtime boundary:
 
-DeepSWE's confidence intervals overlap for some close scores, so a one-point difference such as Sol high versus Terra max is not a reliable quality separation by itself. The large token difference is still relevant, and Sol xhigh exceeds Terra max while using substantially fewer tokens.
+```toml
+[features]
+multi_agent_v2 = true
 
-Artificial Analysis is a broad composite intelligence benchmark rather than a software-agent acceptance test. Its total token counts and DeepSWE's per-task averages use different denominators and must not be combined into one formula.
+[agents]
+max_threads = 4
+max_depth = 1
+```
 
-API evaluation prices are not the same as ChatGPT credit consumption. Fast mode's credit multiplier is an OpenAI product rule, while the benchmark cost columns use API pricing.
+`agents.max_threads` is a safety cap, not a target. Run at most three independent read-only subagents concurrently and never more than one writing agent. Do not run concurrent writers against overlapping files.
 
-This evidence is a dated snapshot, not a permanent model ranking. Refresh the tables from their linked sources, preserve source-versus-derived labels, rerun the arithmetic, and require local validation before changing the profile matrix.
+Keep `agents.max_depth = 1`. Children should not delegate recursively because repeated fan-out increases token use, latency, and coordination risk.
+
+When selecting a custom `agent_type`, use an isolated fork. Codex 0.145.0 rejected a full-history fork that tried to override the parent role; the equivalent isolated fork selected the configured role successfully.
+
+## Routing
+
+Delegate only a concrete independent objective.
+
+Use one matching profile for normal investigation, implementation, or review. Use multiple read-only profiles only when separate concerns can run independently and their combined result materially improves speed or quality.
+
+The root owns requirements, task division, integration, final validation, and the user-facing result.
+
+Require confirmation before `implement_deep`, more than three read-only subagents, multiple sequential delegated runs, or an xhigh override.
+
+## Native Validation
+
+Current validation on 2026-07-22: after activating the all-Sol matrix, Codex CLI 0.145.0 passed the native role-plumbing control with multi-agent V2.
+
+The fresh root recorded `multi_agent_version = "v2"`, GPT-5.6 Sol at medium effort, and a read-only sandbox. Its isolated native child recorded `agent_role = "lookup"`, GPT-5.6 Sol at low effort, and a read-only sandbox. Root session `019f8833-33c4-7512-87e1-d2a50620d841` and child session `019f8833-68a0-73d3-a236-70e542743d11` validate the active lookup runtime and fresh-root sandbox narrowing. The live profile separately confirms Fast speed because rollout records do not persist service tier.
+
+Persisted `agent_role`, model, effort, sandbox, and multi-agent version are runtime evidence. An agent path, nickname, task label, or self-report is not sufficient. Service tier is checked separately from the profile and launcher configuration because the rollout record does not persist it.
+
+The lookup control proves explicit named-role plumbing and the active lookup runtime.
+
+An earlier activation smoke selected a temporary Terra-low `lookup` profile under V2 but retained the active root's `workspace-write` sandbox. Keep it as historical plumbing evidence only; the fresh read-only control above supersedes its sandbox result for the active all-Sol lookup profile.
+
+Neutral automatic selection passed later on 2026-07-22. Root session `019f883f-ff31-7210-ba92-8b89fabc84de` received a real multi-file review prompt with no routing vocabulary and autonomously selected `review`. Child session `019f8840-3ea8-7f42-b650-0f1da029c0c5` recorded `agent_role = "review"`, GPT-5.6 Sol at high effort, a read-only sandbox, and multi-agent V2. The root waited for the child, integrated three actionable findings, and completed the review. The live profile separately confirms Standard speed.
+
+## Evidence Limits
+
+[DeepSWE](https://deepswe.datacurve.ai/) is useful evidence for long-horizon implementation quality, but its shared mini-swe-agent harness does not reproduce native Codex behavior and does not represent mechanical lookup well.
+
+[Artificial Analysis](https://artificialanalysis.ai/models) is useful for broad intelligence, throughput, token use, and API-cost comparisons, but its live values change frequently and API evaluation prices are not ChatGPT credit consumption.
+
+Keep benchmark links and conclusions here instead of copying full volatile leaderboards. Record a new dated snapshot only when it changes a routing decision.

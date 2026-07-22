@@ -30,10 +30,18 @@ Keep Bash files suitable for agents and compatibility sessions.
 
 Keep zsh and tmux files suitable for human SSH sessions.
 
-## Future Helper
+## Helper
 
-A future helper can automate the confirmed copy step, but it should stay small.
+`scripts/fleet-sync.sh` automates the confirmed copy step without owning fleet inventory.
 
-It should read selected files from `dots/`, use existing SSH aliases, show an exact dry run by default, and require a confirmation flag or prompt before writing remote files.
+Pass one or more existing SSH aliases with `--host` and one or more file paths relative to `dots/` with `--file`. The helper maps each file to the same path below the remote home, except `tmux.conf`, which maps to `~/.tmux.conf`.
 
-It should not own the fleet inventory. Host facts belong in the local hardware inventory repo.
+The default is a network-free preview that shows every host, source, destination, SSH directory command, and SCP command. `--apply` is the explicit confirmation boundary and executes only the displayed combinations.
+
+Host facts remain in the local hardware inventory repo. The helper validates explicit aliases and source paths but does not discover or store machines.
+
+Example preview:
+
+```sh
+scripts/fleet-sync.sh --host example-host --file .zshrc --file tmux.conf
+```

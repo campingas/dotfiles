@@ -23,15 +23,23 @@
 
 - Delegate selectively when a bounded independent task benefits from parallel work or context isolation.
 - Do not delegate trivial work, tightly coupled changes, or tasks without a concrete independent objective.
-- Keep integration and final decisions in the root, and run no more than one delegated process or writing agent at a time.
-- Use the `codex-dispatch` skill while native named-role selection remains unverified. Every profile uses GPT-5.6 Sol. The fixed effort and speed map is `lookup` -> low/Fast, `investigate` -> medium/Standard, `implement` -> medium/Standard, `implement_fast` -> high/Standard, `implement_deep` -> high/Standard, `review` -> medium/Standard, and `review_fast` -> high/Standard; never infer or invent a different model, effort, or speed when proposing a route.
-- Exactly one native custom-agent plumbing control is authorized to bypass `codex-dispatch`: a validation-only run that explicitly requests one managed role and inspects its persisted session evidence. This exception is not production routing or automatic-selection evidence; keep production delegation exec-backed until the control passes and a separate reviewed native-first policy transition is made.
-- Automatically dispatch exactly one profile for multi-file investigation or review, bounded implementation with clear acceptance criteria, or independent verification that benefits from isolated context. Read only enough in the root to define the delegated envelope; do not complete the delegated objective first.
-- Before dispatch, announce `Dispatch: <profile> -> <model>/<effort>, <reason>.` Then run automatically for every profile except `implement_deep`.
-- Ask for confirmation before `implement_deep`, more than one delegated run, or an xhigh override. After `implement_deep` is approved, pass `--confirmed` to the dispatcher. Respect `no delegation`, `propose only`, or an explicit profile from the user.
-- Do not edit concurrently with a writing profile. Wait for the delegated report, inspect its evidence and diff, and perform final validation in the root.
-- Treat exec-backed dispatch as a compatibility backend, not a native named-role child. Use native profiles only after session metadata proves a non-null `agent_role` and the configured runtime.
-- Use Sol xhigh only as a one-off override after a failed Sol-high attempt or for a genuinely long-horizon frontier task, and record the reason. Never use max effort.
+- Keep integration and final decisions in the root. Run at most three independent read-only subagents concurrently and never more than one writing agent.
+- Use native named-role spawning. The files under `~/.codex/agents/` are the configuration source of truth for each role's model, effort, service tier, sandbox, and instructions; verify the effective child runtime from persisted evidence when it matters.
+- Every managed profile uses GPT-5.6 Sol. Use this direct-trigger map; the role TOMLs remain the executable configuration truth.
+
+| Role | Effort | Speed | Direct trigger |
+|------|--------|-------|----------------|
+| `lookup` | low | Fast | Exact read-only fact with no material judgment |
+| `investigate` | medium | Standard | Read-only multi-file tracing or research |
+| `implement` | medium | Standard | Bounded implementation with clear acceptance criteria |
+| `implement_deep` | high | Standard | Cross-system debugging, migration, security-sensitive work, or material ambiguity |
+| `review` | high | Standard | Risk-triggered correctness, security, regression, edge-case, or test-gap review |
+
+- When selecting a custom `agent_type`, use an isolated fork because full-history forks inherit the parent role and cannot override it.
+- Automatically select exactly one matching profile for multi-file investigation or review, bounded implementation with clear acceptance criteria, or independent verification that benefits from isolated context. Use multiple read-only profiles only for concrete independent concerns that materially benefit from parallel work.
+- Before delegation, announce `Dispatch: <profile>, <reason>.` Read only enough in the root to define the delegated envelope; do not complete the delegated objective first.
+- Ask for confirmation before `implement_deep`, more than three read-only subagents, multiple sequential delegated runs, or an xhigh override. Respect `no delegation`, `propose only`, or an explicit profile from the user.
+- Do not edit concurrently with a writing profile. Wait for the writer before review or integration when files overlap, inspect its evidence and diff, and perform final validation in the root.
 - Add a separate review only for security, migrations, releases, cross-system behavior, weak validation, or an implementation that already required escalation.
 - Give every child a concrete objective, acceptance criteria, behavior boundary, exclusions, required validation, completion condition, and conditions that require stopping instead of expanding scope.
 
