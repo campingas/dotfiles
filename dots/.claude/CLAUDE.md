@@ -50,10 +50,31 @@
 
 ## Model routing
 
-- Use fable-5 at medium effort by default.
-- Raise Fable to high only for security-sensitive reasoning, architecture with expensive consequences, migrations, release decisions, cross-system debugging, or an incomplete medium result.
-- Fall back to opus-4.8 at high effort only when Fable is unavailable.
+- Claude Code is the orchestrator harness for the Claude model. It owns conversation, planning, integration, and final decisions, and delegates worker tasks to Codex.
+- Prefer Fable 5 (or a higher Fable model) as the default orchestrator model whenever it is available.
+- Fable is unavailable now, so run Opus 4.8 (or a higher Claude model) as the active default. This is a stand-in: the moment Fable 5 or higher is available again, it becomes the default automatically, without editing this file.
+- Use medium effort by default. Raise to high only for security-sensitive reasoning, architecture with expensive consequences, migrations, release decisions, cross-system debugging, or an incomplete medium result.
 - Escalate only when validation or concrete evidence shows a reasoning-quality gap. Do not restart on a stronger lane because the prompt or environment was incomplete.
+
+## Subagent delegation (Codex)
+
+- Never spawn a Claude subagent for delegated worker tasks. All delegation goes to Codex via `codex exec` in Bash. The Claude `Agent` tool spawns Claude subagents and is not the delegation path.
+- Optional pre-flight: for non-trivial or ambiguous tasks, first ask Codex which model and effort it intends (`codex exec -s read-only "Which model and reasoning effort would you use for this task, and why? <task>"`). Greenlight only if the intended choice matches the task class; otherwise name the correct model up front.
+- Default call: `codex exec "<task envelope>"` from the target repo. Let the Codex root and native multi-agent V2 self-select the role and spawn GPT-5.6 Sol children. Do not pre-specify the model on the default path.
+- Verify from the session rollout record what actually ran: `agent_role`, model, effort, sandbox, and `multi_agent_version`. A path, nickname, task label, or self-report is not evidence.
+- Poor-choice handling: if Codex is running or ran with a model or effort wrong for the task class, stop that specific task immediately rather than letting it finish, then re-run naming the model: `codex exec -m gpt-5.6-sol -c model_reasoning_effort=<low|medium|high> -s <read-only|workspace-write> "<task>"`.
+- Every delegation: report to the user the model, effort, and speed that ran. Speed is derived from the role's service tier (only `lookup` is Fast; all other roles are Standard) because it is not persisted in the rollout record.
+- Respect concurrency limits: at most three independent read-only subagents concurrently, never more than one writer, and no concurrent writers on overlapping files.
+- Give every delegated task an objective, acceptance criteria, behavior boundary, exclusions, required validation, completion condition, and stop conditions.
+- The role TOMLs under `~/.codex/agents/` are the executable source of truth. This table is a reporting reference. See `docs/agent-config.md` and `docs/gpt-5.6-agent-selection.md` for the profile matrix and evidence rules.
+
+| Role | Model | Effort | Speed | Sandbox |
+|------|-------|--------|-------|---------|
+| `lookup` | GPT-5.6 Sol | low | Fast | read-only |
+| `investigate` | GPT-5.6 Sol | medium | Standard | read-only |
+| `implement` | GPT-5.6 Sol | medium | Standard | workspace-write |
+| `implement_deep` | GPT-5.6 Sol | high | Standard | workspace-write |
+| `review` | GPT-5.6 Sol | high | Standard | read-only |
 
 # Home hardware & network (pointer)
 

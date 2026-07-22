@@ -38,7 +38,7 @@ Repo-local `AGENTS.md` files should avoid duplicating global defaults.
 
 `docs/agent-config.md` owns Claude, Codex, and skill sync behavior.
 
-Claude uses Fable medium by default and raises it to high only for explicit quality-risk triggers. Every managed Codex profile uses GPT-5.6 Sol: lookup uses low effort and Fast speed, while investigation and implementation use medium effort at Standard speed and deep implementation and review use high effort at Standard speed. The evidence and refresh protocol live in `docs/gpt-5.6-agent-selection.md`.
+Claude Code is the orchestrator harness. It prefers Fable 5 (or higher) when available and runs Opus 4.8 (or a higher Claude model) as the active stand-in while Fable is unavailable, at medium effort by default and high only for explicit quality-risk triggers. It delegates all worker tasks to Codex via `codex exec`, never to a Claude subagent, letting Codex self-select the role and verifying the recorded runtime. Every managed Codex profile uses GPT-5.6 Sol: lookup uses low effort and Fast speed, while investigation and implementation use medium effort at Standard speed and deep implementation and review use high effort at Standard speed. The evidence and refresh protocol live in `docs/gpt-5.6-agent-selection.md`.
 
 Codex keeps integration in the root session, uses at most three independent read-only subagents and one writer, and controls overreach through explicit task envelopes and outcome-based stop conditions.
 
