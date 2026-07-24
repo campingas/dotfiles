@@ -8,7 +8,7 @@ The Bash files are kept simple and quiet for agents, recovery sessions, and comp
 
 Agent Bash has a fast path for lower startup latency. Details and benchmark numbers live in `docs/bash.md`.
 
-Managed files live in `dots/`. Setup and operational notes live in `docs/`.
+Managed files live in `dots/`. Setup and operational notes live in `docs/`. Inactive historical configuration is retained under `frozen/`.
 
 Agent configuration is managed here too: `dots/.claude/CLAUDE.md`, native Codex orchestration policy in `dots/.codex/AGENTS.md`, skills under the runtime-specific `skills/` directories, and executable Codex role definitions under `dots/.codex/agents/`. The Codex app owns global runtime settings such as multi-agent enablement and concurrency.
 
