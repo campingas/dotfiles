@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-07-22
+Last updated: 2026-07-24
 
 ## Status
 
@@ -18,11 +18,13 @@ Codex skills live under `dots/.codex/skills/` and are linked into `~/.codex/skil
 
 Codex subagent profiles live under `dots/.codex/agents/` and are linked into `~/.codex/agents/` by `scripts/agents-syncs.sh`.
 
-The repo-authored Claude skill is `html-planning`.
+The repo-authored Claude skills are `herdr` and `html-planning`.
 
 The repo-authored Claude `ExitPlanMode` hook enforces a recent session-scoped HTML plan artifact, while the `html-planning` skill separately gates successful Plan-Saver archival.
 
 The repo-authored Codex skills are `repo-agents-md` and `html-planning`.
+
+The live third-party Codex `herdr` skill is intentionally outside this repo and is not replaced or pruned by agent-config sync.
 
 The mirrored `html-planning` skill uses one deterministic uploader for Claude, Codex, and compatible Bash-capable agents. Every generated artifact includes its agent name, is delivered locally, and is archived under a stable project/document identity so Plan-Saver appends versions instead of creating timestamped duplicates.
 
@@ -38,6 +40,10 @@ Repo-local `AGENTS.md` files should avoid duplicating global defaults.
 
 `docs/agent-config.md` owns Claude, Codex, and skill sync behavior.
 
+The local terminal workflow is Ghostty with Herdr. The managed zsh startup does not auto-attach a multiplexer over SSH, and remote Herdr use remains explicit and confirmation-gated.
+
+`dots/.config/ghostty/config` keeps full opacity as the default, while `termopacity` performs a symlink-safe atomic update and asks the active Ghostty terminal to reload. `dots/.config/herdr/config.toml` owns the Herdr UI defaults.
+
 Claude Code is the orchestrator harness. It prefers Fable 5 (or higher) when available and runs Opus 4.8 (or a higher Claude model) as the active stand-in while Fable is unavailable, at medium effort by default and high only for explicit quality-risk triggers. It delegates all worker tasks to Codex via `codex exec`, never to a Claude subagent, letting Codex self-select the role and verifying the recorded runtime. Every managed Codex profile uses GPT-5.6 Sol: lookup uses low effort and Fast speed, while investigation and implementation use medium effort at Standard speed and deep implementation and review use high effort at Standard speed. The evidence and refresh protocol live in `docs/gpt-5.6-agent-selection.md`.
 
 Codex keeps integration in the root session, uses at most three independent read-only subagents and one writer, and controls overreach through explicit task envelopes and outcome-based stop conditions.
@@ -47,6 +53,8 @@ Codex uses native named-role spawning. `dots/.codex/AGENTS.md` owns orchestratio
 `docs/fleet-sync.md` owns remote-machine deployment expectations.
 
 `scripts/fleet-sync.sh` provides an explicit-host, explicit-file, network-free preview and requires `--apply` before remote writes.
+
+`scripts/dots-syncs.sh` removes only live symlinks that point exactly to the retired repo-owned cmux and tmux paths; it leaves regular files, other link targets, and unrelated files untouched.
 
 The local hardware inventory repo remains the source of truth for machine details; this public repo should not duplicate LAN details, host inventory, or private operational notes.
 

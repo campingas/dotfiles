@@ -2,15 +2,17 @@
 
 ## Ubuntu install
 
-These packages cover the expected interactive shell, tmux, editor, search, clipboard, archive, media, and image tooling used by the managed dotfiles.
+These packages cover the expected interactive shell, editor, search, clipboard, archive, media, and image tooling used by the managed dotfiles.
 
 Install the expected command-line tools:
 
 ```sh
 sudo apt update
-sudo apt install -y zsh tmux vim fzf lsd curl jq unzip ca-certificates git build-essential
+sudo apt install -y zsh vim fzf lsd curl jq unzip ca-certificates git build-essential
 sudo apt install -y zoxide ffmpeg 7zip 7zip-rar poppler-utils fd-find ripgrep bat xclip wl-clipboard imagemagick
 ```
+
+Interactive SSH opens zsh without an automatic multiplexer. Install, start, or deploy Herdr on an Ubuntu host only when that host is explicitly selected and the remote change is confirmed.
 
 ## T3 Code headless LAN host
 

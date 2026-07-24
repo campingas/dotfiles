@@ -12,7 +12,7 @@ Usage: scripts/fleet-sync.sh --host SSH_ALIAS --file DOTS_PATH [options]
 
 Preview selected files from dots/ to the same paths below a remote home.
 Repeat --host and --file as needed. Pass --apply only after reviewing the
-complete preview. tmux.conf is mapped to ~/.tmux.conf.
+complete preview.
 
 Options:
   --host SSH_ALIAS  Existing SSH alias or explicit SSH host.
@@ -49,16 +49,6 @@ validate_relative_path() {
   [[ "$path" != *//* ]] || die "dots path contains an empty component: $path"
 }
 
-remote_destination() {
-  local relative="$1"
-
-  if [[ "$relative" == "tmux.conf" ]]; then
-    printf '.tmux.conf\n'
-  else
-    printf '%s\n' "$relative"
-  fi
-}
-
 show_or_apply() {
   local host="$1"
   local relative="$2"
@@ -66,7 +56,7 @@ show_or_apply() {
 
   source="$repo_root/dots/$relative"
   [[ -f "$source" ]] || die "missing dots file: $relative"
-  destination="$(remote_destination "$relative")"
+  destination="$relative"
   parent="$(dirname "$destination")"
   remote_dir="\$HOME"
   [[ "$parent" == "." ]] || remote_dir="\$HOME/$parent"

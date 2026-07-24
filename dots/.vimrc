@@ -398,8 +398,3 @@ nmap <leader>2 :set paste<CR>i
 " better page down and page up
 noremap <C-n> <C-d>
 noremap <C-p> <C-b>
-
-" set TMUX window name to name of file
-if exists('$TMUX')
-    autocmd BufEnter * call system('tmux rename-window ' . expand('%:p:h:t') . '/' . expand('%:t'))
-endif

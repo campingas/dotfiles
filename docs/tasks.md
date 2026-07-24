@@ -10,9 +10,11 @@ Keep default context small: `AGENTS.md` routes to focused docs instead of carryi
 
 Keep fleet updates confirmation-gated. Agents may prepare a deployment plan, but they must wait for confirmation before copying files to remote machines.
 
+Keep the local terminal workflow on Ghostty with Herdr. SSH should land in zsh without automatic multiplexer startup, and remote Herdr use remains explicit.
+
 ## Open Items
 
-None. The local policy sync, neutral native automatic-selection check, and dry-run-first fleet helper are complete and validated.
+None. The local Ghostty/Herdr migration, local policy sync, neutral native automatic-selection check, and dry-run-first fleet helper are complete and validated.
 
 ## Native Multi-Agent Validation
 
@@ -129,6 +131,6 @@ For docs-only changes, inspect the Markdown and run a search for stale placehold
 
 For Bash changes, run `bash -n dots/.bashrc dots/.profile` and `shellcheck dots/.bashrc dots/.profile`.
 
-For zsh or tmux changes, validate the affected startup file and make sure the SSH tmux escape hatch remains documented.
+For zsh changes, run `zsh -n dots/.zshrc` and verify that SSH startup remains free of automatic multiplexer behavior.
 
-For sync changes, run `bash -n scripts/agents-syncs.sh scripts/fleet-sync.sh scripts/tests/sync-scripts.sh`, `shellcheck scripts/agents-syncs.sh scripts/fleet-sync.sh scripts/tests/sync-scripts.sh`, and `scripts/tests/sync-scripts.sh`.
+For sync changes, run `bash -n scripts/agents-syncs.sh scripts/dots-syncs.sh scripts/fleet-sync.sh scripts/tests/sync-scripts.sh`, `shellcheck scripts/agents-syncs.sh scripts/dots-syncs.sh scripts/fleet-sync.sh scripts/tests/sync-scripts.sh`, and `scripts/tests/sync-scripts.sh`.

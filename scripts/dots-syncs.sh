@@ -97,13 +97,40 @@ link_file() {
   printf 'linked %s -> %s\n' "$dst" "$src"
 }
 
+remove_retired_symlink() {
+  local dst retired_target
+  dst="$1"
+  retired_target="$2"
+
+  [[ -L "$dst" ]] || return 0
+  [[ "$(readlink "$dst")" == "$retired_target" ]] || return 0
+
+  if destination_has_symlink_parent "$dst"; then
+    printf 'skip retired symlink below a symlinked directory: %s\n' "$dst" >&2
+    return
+  fi
+
+  changes=$((changes + 1))
+  if ((apply == 0)); then
+    printf 'would remove retired symlink %s -> %s\n' "$dst" "$retired_target"
+    return
+  fi
+
+  rm -- "$dst"
+  printf 'removed retired symlink %s -> %s\n' "$dst" "$retired_target"
+}
+
+remove_retired_links() {
+  remove_retired_symlink "$HOME/.tmux.conf" "$repo_root/dots/tmux.conf"
+  remove_retired_symlink "$HOME/.config/cmux/cmux.json" "$repo_root/dots/.config/cmux/cmux.json"
+}
+
 sync_home_files() {
   link_file "$repo_root/dots/.bashrc" "$HOME/.bashrc"
   link_file "$repo_root/dots/.inputrc" "$HOME/.inputrc"
   link_file "$repo_root/dots/.profile" "$HOME/.profile"
   link_file "$repo_root/dots/.vimrc" "$HOME/.vimrc"
   link_file "$repo_root/dots/.zshrc" "$HOME/.zshrc"
-  link_file "$repo_root/dots/tmux.conf" "$HOME/.tmux.conf"
 }
 
 sync_config_files() {
@@ -140,6 +167,7 @@ main() {
     printf 'Previewing dotfile links from %s\n' "$repo_root/dots"
   fi
 
+  remove_retired_links
   sync_home_files
   sync_config_files
 

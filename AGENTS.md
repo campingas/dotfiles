@@ -22,7 +22,7 @@ Bash is the agent and compatibility shell.
 
 Zsh is the human interactive shell.
 
-The normal user workflow is Ghostty with cmux locally, then SSH to hosts where zsh may auto-attach to tmux.
+The normal user workflow is Ghostty with Herdr locally. SSH opens zsh without an automatic multiplexer; remote Herdr use and host deployment are explicit and confirmation-gated.
 
 When shell choice matters for an agent task, prefer Bash unless the user explicitly asks about zsh.
 

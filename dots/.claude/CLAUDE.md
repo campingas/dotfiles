@@ -25,7 +25,7 @@
 ## Shell Fast Paths
 - For a local interactive agent or recovery shell, use `DOTFILES_AGENT_SHELL=1 bash -i`.
 - For local one-off commands, prefer `bash -lc 'command here'`; when the command needs the managed Bash environment, tool paths, or CDPATH first, use `DOTFILES_AGENT_SHELL=1 bash -ic 'command here'`.
-- The fast path loads core environment, tool paths, and CDPATH, then skips prompts, completions, tmux auto-attach, and heavier interactive setup.
+- The fast path loads core environment, tool paths, and CDPATH, then skips prompts, completions, and heavier interactive setup.
 
 ## Core Working Rules
 

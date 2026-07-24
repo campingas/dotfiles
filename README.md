@@ -2,7 +2,7 @@
 
 Personal dotfiles for the machines I use directly and over SSH.
 
-The main laptop workflow is Ghostty with cmux locally, then SSH into other computers as needed. Human interactive shells should land in zsh, and SSH sessions should use tmux so work survives disconnects.
+The main laptop workflow is Ghostty with Herdr locally, then SSH into other computers as needed. Human interactive SSH sessions land in zsh without an automatic multiplexer. Starting or deploying Herdr on a remote host is explicit and confirmation-gated.
 
 The Bash files are kept simple and quiet for agents, recovery sessions, and compatibility. When a task asks an agent to inspect or change shell behavior, prefer Bash unless the request explicitly targets zsh.
 
@@ -26,6 +26,7 @@ The managed zsh setup initializes Starship when it is available, so machines wit
 
 | Skill | Runtime | Purpose |
 |-------|---------|---------|
+| `herdr` | Claude | Control a Herdr session only from a Herdr-managed pane |
 | `html-planning` | Claude, Codex, compatible agents | Render and archive versioned HTML plans and reports with agent attribution |
 | `repo-agents-md` | Codex | Create or update concise repo-specific AGENTS.md files |
 
@@ -38,6 +39,8 @@ It copies `dots/.claude/CLAUDE.md` to `~/.claude/CLAUDE.md`, copies `dots/.codex
 The repo is the source of truth for the files it manages: live copies are overwritten (the replaced diff is printed), and the script is idempotent.
 
 Skills that exist in live skill directories but were not authored in this repo are out of scope; the script leaves them untouched.
+
+Run `scripts/dots-syncs.sh` to preview links for shell and application configuration, including Ghostty and Herdr. Apply reviewed local changes with `scripts/dots-syncs.sh --apply`.
 
 ## Working in this repo
 

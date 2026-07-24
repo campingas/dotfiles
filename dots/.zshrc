@@ -3,13 +3,6 @@
 # Stop early for scripts, scp, cron, and other non-interactive shells.
 [[ -o interactive ]] || return
 
-# -------------------------------- tmux --------------------------------
-# SSH sessions attach to a durable tmux session so work survives disconnects.
-# Escape hatch: `NO_TMUX=1 ssh linpc` for a plain shell.
-if [[ -n "$SSH_TTY" && -z "$TMUX" && -z "$NO_TMUX" ]] && command -v tmux >/dev/null 2>&1; then
-  exec tmux new-session -A -s rob
-fi
-
 # ------------------------------- helpers ------------------------------
 path_prepend() {
   [[ -d "$1" && ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"
@@ -203,10 +196,6 @@ if [[ -n "$FZF_DEFAULT_COMMAND" ]]; then
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 fi
 
-if has fzf-tmux; then
-  export FZF_TMUX_OPTS='-p 80%,70%'
-fi
-
 export FZF_DEFAULT_OPTS='
   --height=60%
   --layout=reverse
@@ -240,12 +229,10 @@ fi
 
 _fzf_file_no_hidden() {
   local cmd result
-  local fzf_cmd=(fzf)
 
   [[ -z "$FZF_DEFAULT_COMMAND" ]] && return 1
-  [[ -n "${TMUX_PANE:-}" && -n "${FZF_TMUX_OPTS:-}" && ${+commands[fzf-tmux]} -eq 1 ]] && fzf_cmd=(fzf-tmux $=FZF_TMUX_OPTS --)
   cmd="${FZF_DEFAULT_COMMAND/--hidden /}"
-  result=$(eval "$cmd" | "${fzf_cmd[@]}" --preview "$_FZF_PREVIEW_CMD") || return
+  result=$(eval "$cmd" | fzf --preview "$_FZF_PREVIEW_CMD") || return
   LBUFFER+="$result"
   zle reset-prompt
 }
@@ -257,7 +244,6 @@ fi
 
 fcd() {
   local dir_cmd dir
-  local fzf_cmd=(fzf)
 
   if has fd; then
     dir_cmd='fd --type d --hidden --strip-cwd-prefix'
@@ -267,8 +253,7 @@ fcd() {
     dir_cmd='find . -type d'
   fi
 
-  [[ -n "${TMUX_PANE:-}" && -n "${FZF_TMUX_OPTS:-}" && ${+commands[fzf-tmux]} -eq 1 ]] && fzf_cmd=(fzf-tmux $=FZF_TMUX_OPTS --)
-  dir=$(eval "$dir_cmd" | "${fzf_cmd[@]}" --preview 'printf "%s\n" {}') || return
+  dir=$(eval "$dir_cmd" | fzf --preview 'printf "%s\n" {}') || return
   [[ -n "$dir" ]] && cd "$dir"
 }
 
@@ -354,6 +339,7 @@ dtag() {
 termopacity() {
   local value config link_target tmp
 
+  # Accept one opacity value from 0 to 1.
   if [[ $# -ne 1 ]]; then
     echo "usage: termopacity 0..1" >&2
     return 2
@@ -365,6 +351,7 @@ termopacity() {
     return 2
   fi
 
+  # Follow the managed symlink so the link itself stays intact.
   config="${GHOSTTY_CONFIG:-$HOME/.config/ghostty/config}"
   if [[ -L "$config" ]]; then
     link_target=$(readlink "$config") || return 1
@@ -372,6 +359,7 @@ termopacity() {
     config="$link_target"
   fi
 
+  # Replace the setting atomically, or append it when missing.
   command mkdir -p "${config:h}"
   tmp="${config}.tmp.$$"
   if [[ -e "$config" ]] && command grep -q '^background-opacity[[:space:]]*=' "$config"; then
@@ -398,8 +386,13 @@ termopacity() {
 
   command mv -f "$tmp" "$config" || return 1
 
-  if [[ -n "${CMUX_WORKSPACE_ID:-}" ]] && command -v cmux >/dev/null 2>&1; then
-    cmux reload-config || return 1
+  # Reload the active Ghostty terminal, including terminals hosted by Herdr.
+  if [[ "$OSTYPE" == darwin* && "${TERM_PROGRAM:-}" == ghostty ]] && command -v osascript >/dev/null 2>&1; then
+    osascript \
+      -e 'tell application "Ghostty"' \
+      -e 'set target_terminal to focused terminal of selected tab of front window' \
+      -e 'perform action "reload_config" on target_terminal' \
+      -e 'end tell' >/dev/null || return 1
   fi
 
   print -r -- "background-opacity = $value"

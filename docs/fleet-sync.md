@@ -28,13 +28,15 @@ Never overwrite an unrelated remote file without making the destination clear fi
 
 Keep Bash files suitable for agents and compatibility sessions.
 
-Keep zsh and tmux files suitable for human SSH sessions.
+Keep zsh suitable for human SSH sessions without automatic multiplexer startup.
+
+Treat remote Herdr use as an explicit per-host choice; never infer installation, startup, or config deployment from the local workflow.
 
 ## Helper
 
 `scripts/fleet-sync.sh` automates the confirmed copy step without owning fleet inventory.
 
-Pass one or more existing SSH aliases with `--host` and one or more file paths relative to `dots/` with `--file`. The helper maps each file to the same path below the remote home, except `tmux.conf`, which maps to `~/.tmux.conf`.
+Pass one or more existing SSH aliases with `--host` and one or more file paths relative to `dots/` with `--file`. The helper maps each file to the same path below the remote home.
 
 The default is a network-free preview that shows every host, source, destination, SSH directory command, and SCP command. `--apply` is the explicit confirmation boundary and executes only the displayed combinations.
 
@@ -43,5 +45,5 @@ Host facts remain in the local hardware inventory repo. The helper validates exp
 Example preview:
 
 ```sh
-scripts/fleet-sync.sh --host example-host --file .zshrc --file tmux.conf
+scripts/fleet-sync.sh --host example-host --file .zshrc --file .config/herdr/config.toml
 ```
