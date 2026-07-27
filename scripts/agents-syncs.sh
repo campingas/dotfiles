@@ -49,72 +49,58 @@ link_agent() {
   printf 'linked %s -> %s\n' "$dst" "$src"
 }
 
-link_hook() {
-  local src="$1"
-  local dst="$2"
-
-  if [[ -e "$dst" && ! -L "$dst" ]]; then
-    printf 'skip existing non-symlink hook: %s\n' "$dst" >&2
-    return 1
-  fi
-  mkdir -p "$(dirname "$dst")"
-  ln -sfn "$src" "$dst"
-  printf 'linked %s -> %s\n' "$dst" "$src"
-}
-
-ensure_claude_html_planning_hook() {
+prune_claude_html_planning_hook() {
   local settings="$HOME/.claude/settings.json"
   local settings_dir="$HOME/.claude"
+  local hook_link="$HOME/.claude/hooks/require-html-planning.sh"
+  local hook_target="$repo_root/dots/.claude/hooks/require-html-planning.sh"
   local hook_command='bash ~/.claude/hooks/require-html-planning.sh'
+  local status
   local tmp
 
-  command -v jq >/dev/null 2>&1 || {
-    printf 'jq is required to merge Claude hook settings\n' >&2
-    return 1
-  }
-  mkdir -p "$settings_dir"
-
-  if [[ -f "$settings" ]] && jq -e --arg command "$hook_command" '
-    any(.hooks.PreToolUse[]?;
-      .matcher == "ExitPlanMode" and
-      any(.hooks[]?; .type == "command" and .command == $command))
-  ' "$settings" >/dev/null; then
-    printf 'unchanged %s\n' "$settings"
-    return
-  fi
-
-  tmp=$(mktemp "$settings_dir/.settings.XXXXXX")
   if [[ -f "$settings" ]]; then
-    if ! jq --arg command "$hook_command" '
-      .hooks //= {} |
-      .hooks.PreToolUse //= [] |
-      if any(.hooks.PreToolUse[]?; .matcher == "ExitPlanMode") then
+    command -v jq >/dev/null 2>&1 || {
+      printf 'jq is required to remove the retired Claude hook setting\n' >&2
+      return 1
+    }
+
+    if jq -e --arg command "$hook_command" '
+      (.hooks.PreToolUse | type) == "array" and
+      any(.hooks.PreToolUse[]?;
+        .matcher == "ExitPlanMode" and
+        (.hooks | type) == "array" and
+        any(.hooks[]?; .type == "command" and .command == $command))
+    ' "$settings" >/dev/null; then
+      tmp=$(mktemp "$settings_dir/.settings.XXXXXX")
+      if ! jq --arg command "$hook_command" '
         .hooks.PreToolUse |= map(
           if .matcher == "ExitPlanMode" then
-            .hooks += [{"type":"command", "command":$command}]
-          else . end
-        )
-      else
-        .hooks.PreToolUse += [{
-          "matcher":"ExitPlanMode",
-          "hooks":[{"type":"command", "command":$command}]
-        }]
-      end
-    ' "$settings" > "$tmp"; then
-      rm -f "$tmp"
-      return 1
+            .hooks |= map(select(.type != "command" or .command != $command))
+          else
+            .
+          end
+        ) |
+        .hooks.PreToolUse |= map(select(.matcher != "ExitPlanMode" or (.hooks | length) > 0))
+      ' "$settings" > "$tmp"; then
+        rm -f "$tmp"
+        return 1
+      fi
+      chmod 600 "$tmp"
+      mv -f "$tmp" "$settings"
+      printf 'removed retired repo-managed hook setting: %s\n' "$settings"
+    else
+      status=$?
+      if [[ "$status" -ne 1 ]]; then
+        printf 'unable to inspect Claude hook settings safely: %s\n' "$settings" >&2
+        return 1
+      fi
     fi
-  else
-    jq -n --arg command "$hook_command" '{
-      hooks:{PreToolUse:[{
-        matcher:"ExitPlanMode",
-        hooks:[{type:"command", command:$command}]
-      }]}
-    }' > "$tmp"
   fi
-  chmod 600 "$tmp"
-  mv -f "$tmp" "$settings"
-  printf 'updated %s\n' "$settings"
+
+  if [[ -L "$hook_link" && "$(readlink "$hook_link")" == "$hook_target" ]]; then
+    rm -- "$hook_link"
+    printf 'removed retired repo-managed hook link: %s\n' "$hook_link"
+  fi
 }
 
 prune_repo_skill_links() {
@@ -210,8 +196,7 @@ main() {
   copy_file "$repo_root/dots/.claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
   copy_file "$repo_root/dots/.codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
   prune_legacy_dispatch_file
-  link_hook "$repo_root/dots/.claude/hooks/require-html-planning.sh" "$HOME/.claude/hooks/require-html-planning.sh"
-  ensure_claude_html_planning_hook
+  prune_claude_html_planning_hook
 
   sync_skill_tree "$repo_root/dots/.claude/skills" "$HOME/.claude/skills"
   sync_skill_tree "$repo_root/dots/.codex/skills" "$HOME/.codex/skills"

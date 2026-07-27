@@ -8,8 +8,6 @@ This repo tracks the user's global coding-agent configuration under `dots/`.
 
 `dots/.claude/skills/` contains repo-authored Claude skills.
 
-`dots/.claude/hooks/` contains repo-authored Claude lifecycle hooks.
-
 `dots/.codex/AGENTS.md` is the source for `~/.codex/AGENTS.md`.
 
 `dots/.codex/skills/` contains repo-authored Codex skills.
@@ -28,7 +26,7 @@ The script copies global adapter files into `~/.claude/` and `~/.codex/`.
 
 The script does not copy or modify the app-managed `~/.codex/config.toml`. The Codex app owns global runtime settings such as feature flags, thread limits, and nesting depth.
 
-The script links the HTML-planning hook into `~/.claude/hooks/` and idempotently merges its `ExitPlanMode` registration into the app-managed `~/.claude/settings.json` without replacing unrelated settings or hooks.
+The script narrowly removes the retired repo-owned HTML-planning hook link and its exact `ExitPlanMode` registration from the app-managed `~/.claude/settings.json`, while leaving unrelated settings and hooks untouched.
 
 The script symlinks each directory under `dots/.claude/skills/` into `~/.claude/skills/`.
 
@@ -44,13 +42,13 @@ Skills that already exist in live skill directories but do not point into this r
 
 Agent profiles that already exist in the live agent directory but do not point into this repo are left untouched.
 
-The Claude HTML-planning hook verifies only that the current session rendered an `html-planning-*.html` artifact recently. The skill remains responsible for verifying and reporting the separate Plan-Saver archive result.
+The Claude `html-planning` skill runs only when the user explicitly asks to save or archive a normal plan or report with the skill, or asks for an HTML version after seeing it. It does not run automatically in plan mode. Once requested, the skill remains responsible for local delivery and Plan-Saver archival.
 
 ## Codex Multi-Agent Split
 
-Claude Code is the orchestrator harness. It prefers Fable 5 (or higher) as the default orchestrator model whenever available, and runs Opus 4.8 (or a higher Claude model) as the active stand-in while Fable is unavailable. It uses medium effort by default and raises to high only for security, consequential architecture, migrations, releases, cross-system debugging, or an incomplete medium result.
+Claude Code is the orchestrator harness. It uses Opus 5 at high effort by default and prohibits all Opus 4.8 and Sonnet models. Claude-native subagents are limited to design or creative tasks and must use Fable 5; other worker tasks may be delegated to Codex.
 
-The Claude model policy lives in `dots/.claude/CLAUDE.md` under "Model routing", and the Claude-to-Codex delegation policy under "Subagent delegation (Codex)".
+The Claude model policy lives in `dots/.claude/CLAUDE.md` under "Model routing", and the Claude-native and Claude-to-Codex delegation policy under "Subagent delegation".
 
 Codex delegates selectively when a bounded independent task benefits from parallel work or context isolation. Simple work uses no delegated process.
 
@@ -90,7 +88,7 @@ Neutral automatic selection passed on 2026-07-22. Root session `019f883f-ff31-72
 
 ## Claude to Codex Delegation
 
-Claude Code is the orchestrator harness and delegates all worker tasks to Codex through `codex exec` in Bash. The Claude `Agent` tool only spawns Claude subagents, so it is not the delegation path. The full policy lives in `dots/.claude/CLAUDE.md` under "Subagent delegation (Codex)".
+Claude Code may use a Fable 5 Claude-native subagent only for design or creative work. It delegates other worker tasks to Codex through `codex exec` in Bash. The full policy lives in `dots/.claude/CLAUDE.md` under "Subagent delegation".
 
 Optional pre-flight: for non-trivial or ambiguous tasks, ask Codex which model and effort it intends before greenlighting: `codex exec -s read-only "Which model and reasoning effort would you use for this task, and why? <task>"`. Proceed only if the intended choice matches the task class; otherwise name the correct model up front.
 

@@ -50,15 +50,14 @@
 
 ## Model routing
 
-- Claude Code is the orchestrator harness for the Claude model. It owns conversation, planning, integration, and final decisions, and delegates worker tasks to Codex.
-- Prefer Fable 5 (or a higher Fable model) as the default orchestrator model whenever it is available.
-- Fable is unavailable now, so run Opus 4.8 (or a higher Claude model) as the active default. This is a stand-in: the moment Fable 5 or higher is available again, it becomes the default automatically, without editing this file.
-- Use medium effort by default. Raise to high only for security-sensitive reasoning, architecture with expensive consequences, migrations, release decisions, cross-system debugging, or an incomplete medium result.
-- Escalate only when validation or concrete evidence shows a reasoning-quality gap. Do not restart on a stronger lane because the prompt or environment was incomplete.
+- Claude Code is the orchestrator harness for the Claude model. It owns conversation, planning, integration, and final decisions, and delegates only under the rules below.
+- Use Opus 5 at high effort by default.
+- Never use any Opus 4.8 or Sonnet model.
 
-## Subagent delegation (Codex)
+## Subagent delegation
 
-- Never spawn a Claude subagent for delegated worker tasks. All delegation goes to Codex via `codex exec` in Bash. The Claude `Agent` tool spawns Claude subagents and is not the delegation path.
+- Claude-native subagents are allowed only for design or creative tasks, and must use Fable 5. Do not use them for implementation, investigation, or review.
+- Delegate other worker tasks to Codex via `codex exec` in Bash.
 - Optional pre-flight: for non-trivial or ambiguous tasks, first ask Codex which model and effort it intends (`codex exec -s read-only "Which model and reasoning effort would you use for this task, and why? <task>"`). Greenlight only if the intended choice matches the task class; otherwise name the correct model up front.
 - Default call: `codex exec "<task envelope>"` from the target repo. Let the Codex root and native multi-agent V2 self-select the role and spawn GPT-5.6 Sol children. Do not pre-specify the model on the default path.
 - Verify from the session rollout record what actually ran: `agent_role`, model, effort, sandbox, and `multi_agent_version`. A path, nickname, task label, or self-report is not evidence.

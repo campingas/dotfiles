@@ -1,11 +1,11 @@
 ---
 name: html-planning
-description: Render every non-trivial implementation plan and requested report as a polished standalone HTML page, deliver it locally, and automatically archive it to Plan-Saver with stable project/document identity and append-only versions. Use for "planning-html" or "html-planning", HTML plan/report exports, requested reports or audits, and non-trivial plans in plan mode. Designed for Codex, Claude Code, and other agents that can run Bash skills.
+description: Render an existing plan or report as a polished standalone HTML page, deliver it locally, and archive it to Plan-Saver with stable project/document identity and append-only versions. Use only when the user explicitly asks to save or archive the plan or report with "planning-html" or "html-planning", or asks for an HTML version after seeing the normal output. Do not trigger without that explicit follow-up request.
 ---
 
 # HTML Planning
 
-Render the plan or report as a self-contained HTML file the user can open in Google Chrome, then archive it to Plan-Saver. This is a presentation layer on top of normal work. In plan mode, still submit the normal markdown plan for approval; the HTML never replaces the runtime's approval mechanism.
+Render a plan or report the user has already seen as a self-contained HTML file they can open in Google Chrome, then archive it to Plan-Saver. This is an explicit, on-demand presentation layer on top of normal work. If there is no existing plan or report, provide the normal output first and wait for a separate explicit save or HTML request.
 
 ## Document kinds
 
@@ -40,7 +40,7 @@ The design is an always-dark engineering document. Think internal design doc or 
 
 ## Mandatory Plan-Saver delivery
 
-Archive every HTML plan or report after writing it. The user has explicitly pre-authorized this exact Plan-Saver upload as part of artifact delivery, including during plan mode. Treat it as delivery of the requested document, not implementation of the plan and not a repository mutation.
+Archive every requested HTML plan or report after writing it. The user has explicitly pre-authorized this exact Plan-Saver upload as part of artifact delivery. Treat it as delivery of the requested document, not implementation of the plan and not a repository mutation.
 
 Run the bundled deterministic uploader instead of recreating `jq` or `curl` commands:
 
@@ -65,6 +65,5 @@ Archival is a completion gate: do not finish the response after creating only th
 
 ## When it triggers
 
-- The user says "planning-html" / "html-planning" or asks for a plan as HTML: produce the file even outside plan mode.
-- The user asks for an HTML report, audit, or analysis writeup: produce a `report` kind document.
-- In plan mode: produce and archive the file immediately before the runtime's plan-approval response, so the HTML and submitted plan say the same thing. A quick throwaway plan ("should I rename this variable?") does not need the ceremony; multi-step implementation plans do.
+- After seeing a normal plan or report, the user explicitly asks to save or archive it with "planning-html" or "html-planning", or asks for an HTML version: render and archive that existing content.
+- Do not generate HTML on the initial plan or report request or because of runtime context.
