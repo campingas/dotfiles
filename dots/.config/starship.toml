@@ -1,15 +1,12 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
 format = """
-[](color_orange)\
 $os\
 $username\
-[](bg:color_yellow fg:color_orange)\
 $directory\
-[](fg:color_yellow bg:color_aqua)\
-$git_branch\
+${custom.git_branch_clean}\
+${custom.git_branch_dirty}\
 $git_status\
-[](fg:color_aqua bg:color_blue)\
 $c\
 $cpp\
 $rust\
@@ -21,13 +18,11 @@ $java\
 $kotlin\
 $haskell\
 $python\
-[](fg:color_blue bg:color_bg3)\
 $docker_context\
 $conda\
 $pixi\
-[](fg:color_bg3 bg:color_bg1)\
 $time\
-[ ](fg:color_bg1)\
+ \
 $line_break$character"""
 
 palette = 'gruvbox_dark'
@@ -46,7 +41,7 @@ color_yellow = '#d79921'
 
 [os]
 disabled = false
-style = "bg:color_orange fg:color_fg0"
+style = "fg:color_yellow"
 
 [os.symbols]
 Windows = "󰍲"
@@ -74,15 +69,16 @@ Pop = ""
 
 [username]
 show_always = true
-style_user = "bg:color_orange fg:color_fg0"
-style_root = "bg:color_orange fg:color_fg0"
+style_user = "fg:color_yellow"
+style_root = "fg:color_yellow"
 format = '[ $user ]($style)'
 
 [directory]
-style = "fg:color_fg0 bg:color_yellow"
+style = "fg:color_aqua"
 format = "[ $path ]($style)"
-truncation_length = 3
+truncation_length = 2
 truncation_symbol = "…/"
+truncate_to_repo = false
 
 [directory.substitutions]
 "Documents" = "󰈙 "
@@ -91,88 +87,99 @@ truncation_symbol = "…/"
 "Pictures" = " "
 "Developer" = "󰲋 "
 
-[git_branch]
+[custom.git_branch_clean]
+command = 'git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD'
+when = 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 && test -z "$(git -c status.showUntrackedFiles=normal status --porcelain 2>/dev/null)"'
+shell = ["bash", "--noprofile", "--norc"]
 symbol = ""
-style = "bg:color_aqua"
-format = '[[ $symbol $branch ](fg:color_fg0 bg:color_aqua)]($style)'
+style = "fg:color_fg0"
+format = '[ $symbol $output ]($style)'
+
+[custom.git_branch_dirty]
+command = 'git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD'
+when = 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 && test -n "$(git -c status.showUntrackedFiles=normal status --porcelain 2>/dev/null)"'
+shell = ["bash", "--noprofile", "--norc"]
+symbol = ""
+style = "fg:color_orange"
+format = '[ $symbol $output ]($style)'
 
 [git_status]
-style = "bg:color_aqua"
-format = '[[($all_status$ahead_behind )](fg:color_fg0 bg:color_aqua)]($style)'
+style = "fg:color_orange"
+format = '[[($all_status$ahead_behind )](fg:color_orange)]($style)'
 
 [nodejs]
 symbol = ""
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [bun]
 symbol = ""
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [c]
 symbol = " "
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [cpp]
 symbol = " "
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [rust]
 symbol = ""
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [golang]
 symbol = ""
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [php]
 symbol = ""
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [java]
 symbol = ""
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [kotlin]
 symbol = ""
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [haskell]
 symbol = ""
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [python]
 symbol = ""
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version) ](fg:color_fg0)]($style)'
 
 [docker_context]
 symbol = ""
-style = "bg:color_bg3"
-format = '[[ $symbol( $context) ](fg:#83a598 bg:color_bg3)]($style)'
+style = "fg:#83a598"
+format = '[[ $symbol( $context) ](fg:#83a598)]($style)'
 
 [conda]
-style = "bg:color_bg3"
-format = '[[ $symbol( $environment) ](fg:#83a598 bg:color_bg3)]($style)'
+style = "fg:#83a598"
+format = '[[ $symbol( $environment) ](fg:#83a598)]($style)'
 
 [pixi]
-style = "bg:color_bg3"
-format = '[[ $symbol( $version)( $environment) ](fg:color_fg0 bg:color_bg3)]($style)'
+style = "fg:color_fg0"
+format = '[[ $symbol( $version)( $environment) ](fg:color_fg0)]($style)'
 
 [time]
 disabled = false
 time_format = "%R"
-style = "bg:color_bg1"
-format = '[[  $time ](fg:color_fg0 bg:color_bg1)]($style)'
+style = "fg:color_fg0"
+format = '[[  $time ](fg:color_fg0)]($style)'
 
 [line_break]
 disabled = false
